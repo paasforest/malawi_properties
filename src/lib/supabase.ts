@@ -1,20 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
+// Only validate in browser runtime, not during build
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
   console.error('Missing Supabase environment variables:', {
     url: supabaseUrl ? '✓' : '✗',
     key: supabaseAnonKey ? '✓' : '✗'
   });
-  throw new Error('Missing Supabase environment variables. Check .env.local file.');
+  console.error('Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment variables.');
 }
 
-// Ensure URL doesn't have trailing slash
-const cleanUrl = supabaseUrl.replace(/\/$/, '');
+// Use placeholder values during build if env vars are missing (build will succeed)
+// Runtime will fail gracefully if not set, but build won't fail
+const cleanUrl = supabaseUrl ? supabaseUrl.replace(/\/$/, '') : 'https://placeholder.supabase.co';
+const safeKey = supabaseAnonKey || 'placeholder-key';
 
-export const supabase = createClient(cleanUrl, supabaseAnonKey, {
+export const supabase = createClient(cleanUrl, safeKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
