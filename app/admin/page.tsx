@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../src/lib/supabase';
-import { AdminDashboard } from '../../src/pages/AdminDashboard';
+import { AdminDashboard } from '../../src/views/AdminDashboard';
 
 export default function AdminPage() {
   const router = useRouter();

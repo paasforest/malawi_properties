@@ -1,4 +1,4 @@
-import { Analytics } from '../../src/pages/Analytics';
+import { Analytics } from '../../src/views/Analytics';
 
 export default function AnalyticsPage() {
   return <Analytics />;
