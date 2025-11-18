@@ -3,15 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Only validate in browser runtime, not during build
-if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
-  console.error('Missing Supabase environment variables:', {
-    url: supabaseUrl ? '✓' : '✗',
-    key: supabaseAnonKey ? '✓' : '✗'
-  });
-  console.error('Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment variables.');
-}
-
 // Use placeholder values during build if env vars are missing (build will succeed)
 // Runtime will fail gracefully if not set, but build won't fail
 // Ensure URL has https:// protocol and no trailing slash
@@ -19,6 +10,22 @@ const cleanUrl = supabaseUrl
   ? supabaseUrl.replace(/\/$/, '').replace(/^(https?:\/\/)?/, 'https://')
   : 'https://placeholder.supabase.co';
 const safeKey = supabaseAnonKey || 'placeholder-key';
+
+// Only validate in browser runtime, not during build
+if (typeof window !== 'undefined') {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Missing Supabase environment variables:', {
+      url: supabaseUrl ? '✓' : '✗',
+      key: supabaseAnonKey ? '✓' : '✗'
+    });
+    console.error('Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy.');
+  } else {
+    console.log('✅ Supabase initialized:', {
+      url: `${cleanUrl.substring(0, 30)}...`,
+      key: `${safeKey.substring(0, 20)}...`
+    });
+  }
+}
 
 export const supabase = createClient(cleanUrl, safeKey, {
   auth: {

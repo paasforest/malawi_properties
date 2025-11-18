@@ -1,5 +1,5 @@
 {
+  "/setup/test-users/page": "app/setup/test-users/page.js",
   "/admin/page": "app/admin/page.js",
-  "/page": "app/page.js",
-  "/setup/test-users/page": "app/setup/test-users/page.js"
+  "/page": "app/page.js"
 }

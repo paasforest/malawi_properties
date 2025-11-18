@@ -22,11 +22,35 @@ export default function AdminLoginPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+      // Debug: Log environment variables (first few chars only for security)
+      console.log('🔍 Environment Check:', {
+        url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
+        key: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'MISSING',
+      });
+
       if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration error. Please check environment variables.');
+        const errorMsg = `Missing environment variables. URL: ${supabaseUrl ? '✓' : '✗'}, Key: ${supabaseKey ? '✓' : '✗'}. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy.`;
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
       }
 
-      console.log('Attempting login with:', { email, supabaseUrl });
+      // Test Supabase URL accessibility
+      try {
+        const testUrl = `${supabaseUrl}/rest/v1/`;
+        console.log('🧪 Testing Supabase connection to:', testUrl);
+        const testResponse = await fetch(testUrl, {
+          method: 'HEAD',
+          headers: {
+            'apikey': supabaseKey,
+          },
+        });
+        console.log('✅ Supabase connection test:', testResponse.status, testResponse.statusText);
+      } catch (testError: any) {
+        console.error('❌ Supabase connection test failed:', testError);
+        throw new Error(`Cannot connect to Supabase. Check URL: ${supabaseUrl}. Error: ${testError.message}`);
+      }
+
+      console.log('🔐 Attempting login with:', { email, supabaseUrl });
 
       // Sign in with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
