@@ -16,13 +16,22 @@ if (typeof window !== 'undefined') {
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('❌ Missing Supabase environment variables:', {
       url: supabaseUrl ? '✓' : '✗',
-      key: supabaseAnonKey ? '✓' : '✗'
+      key: supabaseAnonKey ? '✓' : '✗',
+      urlValue: supabaseUrl || 'MISSING',
+      keyValue: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'MISSING'
     });
     console.error('Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel environment variables and redeploy.');
+  } else if (supabaseAnonKey === 'placeholder-key' || supabaseAnonKey.length < 50) {
+    console.error('❌ Invalid Supabase anon key:', {
+      keyLength: supabaseAnonKey.length,
+      keyPreview: supabaseAnonKey.substring(0, 30) + '...',
+      message: 'Anon key appears to be a placeholder or too short. Please check Vercel environment variables.'
+    });
   } else {
     console.log('✅ Supabase initialized:', {
       url: `${cleanUrl.substring(0, 30)}...`,
-      key: `${safeKey.substring(0, 20)}...`
+      keyLength: safeKey.length,
+      keyPreview: `${safeKey.substring(0, 20)}...`
     });
   }
 }
