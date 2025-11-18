@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, Trash2, ImagePlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Property, Agent, PropertyType, PropertyStatus } from '../lib/supabase';
@@ -22,6 +22,7 @@ const MALAWI_DISTRICTS = [
 export function PropertyForm({ agent, userId, property, onClose, onSuccess }: PropertyFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [imageError, setImageError] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,6 +41,10 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     is_urgent_sale: false,
     status: 'available' as PropertyStatus,
   });
+
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
     if (property) {
@@ -60,8 +65,90 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         is_urgent_sale: property.is_urgent_sale,
         status: property.status,
       });
+      setExistingImages(property.images || []);
     }
   }, [property]);
+
+  useEffect(() => {
+    return () => {
+      // Clean up object URLs
+      newImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, [newImagePreviews]);
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setImageError('');
+    const files = Array.from(event.target.files || []);
+    if (!files.length) {
+      setNewImages([]);
+      setNewImagePreviews([]);
+      return;
+    }
+
+    const maxFiles = 10;
+    const maxSizeMb = 5;
+
+    if (files.length + existingImages.length > maxFiles) {
+      setImageError(`Please upload up to ${maxFiles} images in total.`);
+      return;
+    }
+
+    const oversizedFile = files.find((file) => file.size > maxSizeMb * 1024 * 1024);
+    if (oversizedFile) {
+      setImageError(`"${oversizedFile.name}" is too large. Max size is ${maxSizeMb}MB per image.`);
+      return;
+    }
+
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setNewImages(files);
+    setNewImagePreviews((prev) => {
+      prev.forEach((url) => URL.revokeObjectURL(url));
+      return previews;
+    });
+  };
+
+  const handleRemoveExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewImage = (index: number) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => {
+      const updated = [...prev];
+      const [removed] = updated.splice(index, 1);
+      if (removed) URL.revokeObjectURL(removed);
+      return updated;
+    });
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (!newImages.length) return [];
+
+    const uploadedUrls: string[] = [];
+
+    for (const image of newImages) {
+      const fileExt = image.name.split('.').pop() || 'jpg';
+      const filePath = `property-${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('property-images')
+        .upload(filePath, image, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      const { data } = supabase.storage.from('property-images').getPublicUrl(filePath);
+      if (data?.publicUrl) {
+        uploadedUrls.push(data.publicUrl);
+      }
+    }
+
+    return uploadedUrls;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +156,9 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     setError('');
 
     try {
+      const uploadedImageUrls = await uploadImages();
+      const combinedImages = [...existingImages, ...uploadedImageUrls];
+
       const propertyData = {
         title: formData.title,
         description: formData.description || null,
@@ -85,6 +175,7 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         reason_for_selling: formData.reason_for_selling || null,
         is_urgent_sale: formData.is_urgent_sale,
         status: formData.status,
+        images: combinedImages,
         agent_id: agent?.id || null,
         owner_id: agent ? null : userId,
       };
@@ -96,6 +187,7 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
           .eq('id', property.id);
 
         if (updateError) throw updateError;
+        setExistingImages(combinedImages);
       } else {
         const { error: insertError } = await supabase
           .from('properties')
@@ -110,6 +202,10 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
             .eq('id', agent.id);
         }
       }
+
+      setNewImages([]);
+      newImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      setNewImagePreviews([]);
 
       onSuccess();
     } catch (err: any) {
@@ -143,6 +239,79 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Property Photos
+              </label>
+              <div className="flex flex-col gap-3">
+                <label className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">
+                  <ImagePlus size={20} />
+                  <span className="text-sm font-medium">
+                    Click to upload (PNG, JPG up to 5MB each)
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+                </label>
+                <p className="text-xs text-gray-500">
+                  You can upload up to 10 images. The first photo will be used as the cover image.
+                </p>
+                {imageError && (
+                  <p className="text-sm text-red-600">{imageError}</p>
+                )}
+              </div>
+
+              {(existingImages.length > 0 || newImagePreviews.length > 0) && (
+                <div className="mt-4 space-y-4">
+                  {existingImages.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-gray-500 mb-2">Existing Images</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {existingImages.map((url, index) => (
+                          <div key={url} className="relative group rounded-lg overflow-hidden border border-gray-200">
+                            <img src={url} alt={`Property image ${index + 1}`} className="w-full h-32 object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingImage(index)}
+                              className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label="Remove image"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {newImagePreviews.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-gray-500 mb-2">New Images</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {newImagePreviews.map((preview, index) => (
+                          <div key={preview} className="relative group rounded-lg overflow-hidden border border-gray-200">
+                            <img src={preview} alt={`New property image ${index + 1}`} className="w-full h-32 object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveNewImage(index)}
+                              className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label="Remove image"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Property Title *
