@@ -10,15 +10,22 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🚀 LOGIN STARTED');
+    console.log('📧 Email:', email);
+    console.log('🔑 Password length:', password.length);
+    
     setLoading(true);
     setError('');
+    setSuccess(false);
 
     try {
-      // Test Supabase connection first
+      // Step 1: Test Supabase connection first
+      console.log('📋 STEP 1: Checking environment variables...');
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -26,6 +33,7 @@ export default function AdminLoginPage() {
       console.log('🔍 Environment Check:', {
         url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
         key: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'MISSING',
+        keyLength: supabaseKey?.length || 0,
       });
 
       if (!supabaseUrl || !supabaseKey) {
@@ -34,7 +42,8 @@ export default function AdminLoginPage() {
         throw new Error(errorMsg);
       }
 
-      // Test Supabase URL accessibility
+      // Step 2: Test Supabase URL accessibility
+      console.log('📋 STEP 2: Testing Supabase connection...');
       try {
         const testUrl = `${supabaseUrl}/rest/v1/`;
         console.log('🧪 Testing Supabase connection to:', testUrl);
@@ -50,16 +59,29 @@ export default function AdminLoginPage() {
         throw new Error(`Cannot connect to Supabase. Check URL: ${supabaseUrl}. Error: ${testError.message}`);
       }
 
-      console.log('🔐 Attempting login with:', { email, supabaseUrl });
-
-      // Sign in with Supabase
+      // Step 3: Sign in with Supabase
+      console.log('📋 STEP 3: Attempting authentication...');
+      console.log('🔐 Signing in with email:', email);
+      
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('📦 Auth response received:', {
+        hasData: !!authData,
+        hasUser: !!authData?.user,
+        hasError: !!authError,
+        userId: authData?.user?.id,
+        userEmail: authData?.user?.email,
+      });
+
       if (authError) {
-        console.error('Auth error:', authError);
+        console.error('❌ Auth error occurred:', {
+          message: authError.message,
+          status: authError.status,
+          error: authError,
+        });
         
         // Better error messages
         if (authError.message.includes('Invalid login credentials')) {
@@ -72,53 +94,118 @@ export default function AdminLoginPage() {
         throw authError;
       }
 
-      if (!authData.user) {
+      if (!authData || !authData.user) {
+        console.error('❌ No user data in auth response:', authData);
         throw new Error('Login failed. Please check your credentials.');
       }
 
-      console.log('Auth successful, checking admin status...');
+      console.log('✅ STEP 3 SUCCESS: Authentication successful');
+      console.log('👤 User authenticated:', {
+        id: authData.user.id,
+        email: authData.user.email,
+        createdAt: authData.user.created_at,
+      });
 
-      // Check if user is admin
+      // Step 4: Check if user is admin
+      console.log('📋 STEP 4: Checking user profile and admin status...');
+      console.log('🔍 Querying profiles table for user ID:', authData.user.id);
+      
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id, email, user_type, is_verified')
         .eq('id', authData.user.id)
         .maybeSingle();
 
+      console.log('📦 Profile query response:', {
+        hasData: !!profile,
+        hasError: !!profileError,
+        profile: profile,
+        error: profileError,
+      });
+
       if (profileError) {
-        console.error('Profile error:', profileError);
-        console.error('Error details:', JSON.stringify(profileError, null, 2));
+        console.error('❌ Profile query error:', {
+          message: profileError.message,
+          details: profileError,
+          code: profileError.code,
+          hint: profileError.hint,
+        });
+        console.error('Error details (JSON):', JSON.stringify(profileError, null, 2));
         throw new Error(`Failed to check user permissions: ${profileError.message}. Make sure the profile exists in Supabase.`);
       }
 
       if (!profile) {
+        console.error('❌ No profile found for user:', {
+          userId: authData.user.id,
+          userEmail: authData.user.email,
+        });
+        console.log('🔓 Signing out user due to missing profile...');
         await supabase.auth.signOut();
-        console.error('No profile found for user:', authData.user.id);
         throw new Error('User profile not found. Please create the admin profile in Supabase first. See CREATE_ADMIN_NOW.md');
       }
 
-      console.log('Profile found:', { user_type: profile.user_type, is_verified: profile.is_verified });
+      console.log('✅ STEP 4 SUCCESS: Profile found');
+      console.log('👤 Profile details:', {
+        id: profile.id,
+        email: profile.email,
+        user_type: profile.user_type,
+        is_verified: profile.is_verified,
+      });
 
       if (profile.user_type !== 'admin') {
+        console.error('❌ User is not admin:', {
+          required: 'admin',
+          actual: profile.user_type,
+        });
+        console.log('🔓 Signing out user due to insufficient privileges...');
         await supabase.auth.signOut();
         throw new Error(`Access denied. Admin privileges required. Current user type: ${profile.user_type}. Update profile in Supabase.`);
       }
 
-      console.log('Admin access granted, redirecting...');
+      console.log('✅ STEP 4 SUCCESS: User is admin');
+      console.log('📋 STEP 5: Redirecting to admin dashboard...');
 
-      // Redirect to admin dashboard
-      router.push('/admin');
-      router.refresh();
+      // Step 5: Redirect to admin dashboard
+      setSuccess(true);
+      console.log('🔄 Calling router.push("/admin")...');
+      
+      try {
+        router.push('/admin');
+        console.log('✅ router.push() called successfully');
+        
+        console.log('🔄 Calling router.refresh()...');
+        router.refresh();
+        console.log('✅ router.refresh() called successfully');
+        
+        console.log('⏳ Waiting 2 seconds to check if redirect worked...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log('📍 Current location after redirect attempt:', window.location.href);
+        
+      } catch (redirectError: any) {
+        console.error('❌ Redirect error:', redirectError);
+        throw new Error(`Redirect failed: ${redirectError.message}`);
+      }
+
+      console.log('✅ LOGIN COMPLETE - All steps successful');
+
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ LOGIN FAILED - Error caught:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name,
+        error: err,
+      });
+      
       const errorMessage = err.message || err.error_description || 'Login failed. Please try again.';
       setError(errorMessage);
       
-      // Show detailed error in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Full error:', err);
-      }
+      // Always show full error in console
+      console.error('Full error object:', err);
+      
     } finally {
+      console.log('🏁 Login process finished, setting loading to false');
       setLoading(false);
     }
   };
@@ -137,12 +224,22 @@ export default function AdminLoginPage() {
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-green-900">✅ Login Successful!</p>
+                <p className="text-sm text-green-700 mt-1">Redirecting to admin dashboard...</p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-900">Error</p>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
+                <p className="text-xs text-red-600 mt-2">Check browser console (F12) for detailed logs.</p>
               </div>
             </div>
           )}
