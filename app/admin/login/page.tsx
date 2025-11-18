@@ -15,9 +15,12 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 LOGIN STARTED');
-    console.log('📧 Email:', email);
-    console.log('🔑 Password length:', password.length);
+    
+    // VERY VISIBLE DEBUGGING - These should always show
+    console.warn('🚀🚀🚀 LOGIN STARTED 🚀🚀🚀');
+    console.warn('📧 Email:', email);
+    console.warn('🔑 Password length:', password.length);
+    console.error('🔍 DEBUG: Form submitted, handleLogin called!');
     
     setLoading(true);
     setError('');
@@ -25,12 +28,12 @@ export default function AdminLoginPage() {
 
     try {
       // Step 1: Test Supabase connection first
-      console.log('📋 STEP 1: Checking environment variables...');
+      console.warn('📋 STEP 1: Checking environment variables...');
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
       // Debug: Log environment variables (first few chars only for security)
-      console.log('🔍 Environment Check:', {
+      console.warn('🔍 Environment Check:', {
         url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
         key: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'MISSING',
         keyLength: supabaseKey?.length || 0,
@@ -43,32 +46,33 @@ export default function AdminLoginPage() {
       }
 
       // Step 2: Test Supabase URL accessibility
-      console.log('📋 STEP 2: Testing Supabase connection...');
+      console.warn('📋 STEP 2: Testing Supabase connection...');
       try {
         const testUrl = `${supabaseUrl}/rest/v1/`;
-        console.log('🧪 Testing Supabase connection to:', testUrl);
+        console.warn('🧪 Testing Supabase connection to:', testUrl);
         const testResponse = await fetch(testUrl, {
           method: 'HEAD',
           headers: {
             'apikey': supabaseKey,
           },
         });
-        console.log('✅ Supabase connection test:', testResponse.status, testResponse.statusText);
+        console.warn('✅ Supabase connection test:', testResponse.status, testResponse.statusText);
       } catch (testError: any) {
         console.error('❌ Supabase connection test failed:', testError);
         throw new Error(`Cannot connect to Supabase. Check URL: ${supabaseUrl}. Error: ${testError.message}`);
       }
 
       // Step 3: Sign in with Supabase
-      console.log('📋 STEP 3: Attempting authentication...');
-      console.log('🔐 Signing in with email:', email);
+      console.warn('📋 STEP 3: Attempting authentication...');
+      console.warn('🔐 Signing in with email:', email);
+      console.error('⏳ CALLING supabase.auth.signInWithPassword NOW...');
       
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('📦 Auth response received:', {
+      console.error('📦 Auth response received:', {
         hasData: !!authData,
         hasUser: !!authData?.user,
         hasError: !!authError,
@@ -99,16 +103,16 @@ export default function AdminLoginPage() {
         throw new Error('Login failed. Please check your credentials.');
       }
 
-      console.log('✅ STEP 3 SUCCESS: Authentication successful');
-      console.log('👤 User authenticated:', {
+      console.error('✅✅✅ STEP 3 SUCCESS: Authentication successful ✅✅✅');
+      console.warn('👤 User authenticated:', {
         id: authData.user.id,
         email: authData.user.email,
         createdAt: authData.user.created_at,
       });
 
       // Step 4: Check if user is admin
-      console.log('📋 STEP 4: Checking user profile and admin status...');
-      console.log('🔍 Querying profiles table for user ID:', authData.user.id);
+      console.warn('📋 STEP 4: Checking user profile and admin status...');
+      console.warn('🔍 Querying profiles table for user ID:', authData.user.id);
       
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -116,7 +120,7 @@ export default function AdminLoginPage() {
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      console.log('📦 Profile query response:', {
+      console.error('📦 Profile query response:', {
         hasData: !!profile,
         hasError: !!profileError,
         profile: profile,
@@ -144,8 +148,8 @@ export default function AdminLoginPage() {
         throw new Error('User profile not found. Please create the admin profile in Supabase first. See CREATE_ADMIN_NOW.md');
       }
 
-      console.log('✅ STEP 4 SUCCESS: Profile found');
-      console.log('👤 Profile details:', {
+      console.error('✅ STEP 4 SUCCESS: Profile found');
+      console.warn('👤 Profile details:', {
         id: profile.id,
         email: profile.email,
         user_type: profile.user_type,
@@ -153,41 +157,41 @@ export default function AdminLoginPage() {
       });
 
       if (profile.user_type !== 'admin') {
-        console.error('❌ User is not admin:', {
+        console.error('❌❌❌ User is not admin:', {
           required: 'admin',
           actual: profile.user_type,
         });
-        console.log('🔓 Signing out user due to insufficient privileges...');
+        console.warn('🔓 Signing out user due to insufficient privileges...');
         await supabase.auth.signOut();
         throw new Error(`Access denied. Admin privileges required. Current user type: ${profile.user_type}. Update profile in Supabase.`);
       }
 
-      console.log('✅ STEP 4 SUCCESS: User is admin');
-      console.log('📋 STEP 5: Redirecting to admin dashboard...');
+      console.error('✅✅✅ STEP 4 SUCCESS: User is admin ✅✅✅');
+      console.warn('📋 STEP 5: Redirecting to admin dashboard...');
 
       // Step 5: Redirect to admin dashboard
       setSuccess(true);
-      console.log('🔄 Calling router.push("/admin")...');
+      console.error('🔄🔄🔄 Calling router.push("/admin")...');
       
       try {
         router.push('/admin');
-        console.log('✅ router.push() called successfully');
+        console.error('✅ router.push() called successfully');
         
-        console.log('🔄 Calling router.refresh()...');
+        console.warn('🔄 Calling router.refresh()...');
         router.refresh();
-        console.log('✅ router.refresh() called successfully');
+        console.error('✅ router.refresh() called successfully');
         
-        console.log('⏳ Waiting 2 seconds to check if redirect worked...');
+        console.warn('⏳ Waiting 2 seconds to check if redirect worked...');
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        console.log('📍 Current location after redirect attempt:', window.location.href);
+        console.error('📍📍📍 Current location after redirect attempt:', window.location.href);
         
       } catch (redirectError: any) {
-        console.error('❌ Redirect error:', redirectError);
+        console.error('❌❌❌ Redirect error:', redirectError);
         throw new Error(`Redirect failed: ${redirectError.message}`);
       }
 
-      console.log('✅ LOGIN COMPLETE - All steps successful');
+      console.error('✅✅✅ LOGIN COMPLETE - All steps successful ✅✅✅');
 
     } catch (err: any) {
       console.error('❌ LOGIN FAILED - Error caught:', err);
@@ -205,7 +209,7 @@ export default function AdminLoginPage() {
       console.error('Full error object:', err);
       
     } finally {
-      console.log('🏁 Login process finished, setting loading to false');
+      console.error('🏁🏁🏁 Login process finished, setting loading to false 🏁🏁🏁');
       setLoading(false);
     }
   };
