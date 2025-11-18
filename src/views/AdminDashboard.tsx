@@ -932,13 +932,13 @@ export function AdminDashboard() {
         </div>
 
         {/* Date Range Selector */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-6 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-700 font-medium">Time Period:</span>
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 mb-4 sm:mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+            <span className="text-gray-700 font-medium text-sm sm:text-base">Time Period:</span>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-base sm:text-sm min-h-[44px] flex-1 sm:flex-initial"
             >
               <option value="today">Today</option>
               <option value="7d">Last 7 Days</option>
@@ -946,7 +946,7 @@ export function AdminDashboard() {
               <option value="all">All Time</option>
             </select>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
             Last updated: {new Date().toLocaleTimeString()}
           </div>
         </div>
