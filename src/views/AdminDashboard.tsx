@@ -817,52 +817,52 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
-              <Shield className="text-blue-600" size={36} />
-              Admin Dashboard
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+              <Shield className="text-blue-600 w-7 h-7 sm:w-9 sm:h-9" size={28} />
+              <span>Admin Dashboard</span>
             </h1>
-            <p className="text-gray-600 mt-2">Comprehensive data monitoring and analytics</p>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Comprehensive data monitoring and analytics</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={loadDashboardData}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
             >
               <RefreshCw size={18} />
-              Refresh
+              <span>Refresh</span>
             </button>
             <div className="relative group">
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+              <button className="w-full sm:w-auto px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]">
                 <Download size={18} />
-                Export Data
+                <span>Export Data</span>
               </button>
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-48 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                 <button
                   onClick={() => exportData('properties')}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-50 rounded-t-lg text-sm"
+                  className="block w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-lg text-sm min-h-[44px]"
                 >
                   Export Properties
                 </button>
                 <button
                   onClick={() => exportData('inquiries')}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
+                  className="block w-full text-left px-4 py-3 hover:bg-gray-50 text-sm min-h-[44px]"
                 >
                   Export Inquiries
                 </button>
                 <button
                   onClick={() => exportData('users')}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
+                  className="block w-full text-left px-4 py-3 hover:bg-gray-50 text-sm min-h-[44px]"
                 >
                   Export Users
                 </button>
                 <button
                   onClick={() => exportData('analytics')}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-50 rounded-b-lg text-sm"
+                  className="block w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-lg text-sm min-h-[44px]"
                 >
                   Export Analytics
                 </button>

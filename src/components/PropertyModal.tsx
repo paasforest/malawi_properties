@@ -200,13 +200,14 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
   // If details not unlocked and user is not logged in, show preview
   if (!detailsUnlocked && !isLoggedInUser) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{property.title}</h2>
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+        <div className="bg-white rounded-lg sm:rounded-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center justify-between z-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 pr-2 truncate">{property.title}</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
+              aria-label="Close"
             >
               <X size={24} />
             </button>
@@ -253,7 +254,7 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
               </p>
               <button
                 onClick={handleViewDetails}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="w-full bg-blue-600 text-white py-3.5 sm:py-3 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold text-base min-h-[44px]"
               >
                 View Full Details
               </button>
@@ -281,22 +282,23 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">{property.title}</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-none sm:rounded-lg max-w-4xl w-full h-full sm:h-auto max-h-full sm:max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center justify-between z-10">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 pr-2 truncate">{property.title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
+            aria-label="Close"
           >
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {property.images && property.images.length > 0 ? (
             <div className="mb-6">
-              <div className="relative h-96 bg-gray-200 rounded-lg overflow-hidden">
+              <div className="relative h-48 sm:h-64 md:h-96 bg-gray-200 rounded-lg overflow-hidden">
                 <img
                   src={property.images[currentImageIndex]}
                   alt={property.title}
@@ -402,7 +404,7 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
           <div className="mb-4">
             <button
               onClick={onInquire}
-              className="w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl"
+              className="w-full bg-blue-600 text-white py-3.5 sm:py-4 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl min-h-[44px]"
             >
               Send Inquiry
             </button>
