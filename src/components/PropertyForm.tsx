@@ -8,7 +8,7 @@ interface PropertyFormProps {
   userId: string;
   property?: Property | null;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (result?: { message?: string; property?: Property }) => void;
 }
 
 const MALAWI_DISTRICTS = [
@@ -81,7 +81,10 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     const files = Array.from(event.target.files || []);
     if (!files.length) {
       setNewImages([]);
-      setNewImagePreviews([]);
+      setNewImagePreviews((prev) => {
+        prev.forEach((url) => URL.revokeObjectURL(url));
+        return [];
+      });
       return;
     }
 
@@ -159,6 +162,8 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
       const uploadedImageUrls = await uploadImages();
       const combinedImages = [...existingImages, ...uploadedImageUrls];
 
+      let savedProperty: Property | null = null;
+
       const propertyData = {
         title: formData.title,
         description: formData.description || null,
@@ -181,19 +186,26 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
       };
 
       if (property) {
-        const { error: updateError } = await supabase
+        const { data: updatedProperty, error: updateError } = await supabase
           .from('properties')
           .update(propertyData)
-          .eq('id', property.id);
+          .eq('id', property.id)
+          .select('*')
+          .single();
 
         if (updateError) throw updateError;
+        savedProperty = updatedProperty as Property;
         setExistingImages(combinedImages);
       } else {
-        const { error: insertError } = await supabase
+        const { data: insertedProperty, error: insertError } = await supabase
           .from('properties')
-          .insert(propertyData);
+          .insert(propertyData)
+          .select('*')
+          .single();
 
         if (insertError) throw insertError;
+
+        savedProperty = insertedProperty as Property;
 
         if (agent) {
           await supabase
@@ -204,10 +216,19 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
       }
 
       setNewImages([]);
-      newImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-      setNewImagePreviews([]);
+      setNewImagePreviews((prev) => {
+        prev.forEach((preview) => URL.revokeObjectURL(preview));
+        return [];
+      });
 
-      onSuccess();
+      const successMessage = property
+        ? 'Property updated successfully!'
+        : 'Property added successfully!';
+
+      onSuccess({
+        message: successMessage,
+        property: savedProperty || undefined,
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to save property');
       console.error(err);

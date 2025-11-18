@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Property, Profile, Agent, Inquiry } from '../lib/supabase';
-import { Plus, TrendingUp, Eye, MessageSquare, DollarSign, Clock, Trash2, CheckCircle, XCircle, Edit, Settings } from 'lucide-react';
+import { Plus, TrendingUp, Eye, MessageSquare, DollarSign, Clock, Trash2, CheckCircle, XCircle, Edit, Settings, AlertCircle } from 'lucide-react';
 import { PropertyForm } from '../components/PropertyForm';
 import { MarkAsSoldModal } from '../components/MarkAsSoldModal';
 
@@ -18,10 +18,17 @@ export function Dashboard() {
   const [showAgentProfileForm, setShowAgentProfileForm] = useState(false);
   const [updatingInquiry, setUpdatingInquiry] = useState<string | null>(null);
   const [propertyToMarkSold, setPropertyToMarkSold] = useState<Property | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [toast]);
 
   const loadDashboardData = async () => {
     try {
@@ -549,10 +556,15 @@ export function Dashboard() {
             setShowPropertyForm(false);
             setEditingProperty(null);
           }}
-          onSuccess={() => {
+          onSuccess={async (result) => {
+            const wasEditing = Boolean(editingProperty);
             setShowPropertyForm(false);
             setEditingProperty(null);
-            loadDashboardData();
+            await loadDashboardData();
+            setToast({
+              message: result?.message || (wasEditing ? 'Property updated successfully!' : 'Property added successfully!'),
+              type: 'success',
+            });
           }}
         />
       )}
@@ -579,6 +591,30 @@ export function Dashboard() {
             loadDashboardData();
           }}
         />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 z-50">
+          <div
+            className={`max-w-sm ml-auto bg-white border-l-4 rounded-lg shadow-xl p-4 flex items-start gap-3 ${
+              toast.type === 'success' ? 'border-green-500' : 'border-red-500'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle className="text-green-600 mt-0.5" size={18} />
+            ) : (
+              <AlertCircle className="text-red-600 mt-0.5" size={18} />
+            )}
+            <div className="flex-1 text-sm text-gray-800">{toast.message}</div>
+            <button
+              onClick={() => setToast(null)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Dismiss notification"
+            >
+              ×
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
