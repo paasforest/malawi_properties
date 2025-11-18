@@ -443,29 +443,6 @@ export function MarketIntelligence() {
           </div>
         </div>
 
-        {/* Data Intelligence Summary */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-md p-8 text-white">
-          <h2 className="text-2xl font-bold mb-4">Your Data Intelligence Advantage</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <div className="text-4xl font-bold mb-2">{districtData.length}</div>
-              <div className="text-purple-100">Districts Analyzed</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">{agentPerformance.length}</div>
-              <div className="text-purple-100">Agents Tracked</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">{diasporaPatterns.length}</div>
-              <div className="text-purple-100">Diaspora Locations</div>
-            </div>
-          </div>
-          <p className="mt-6 text-purple-100">
-            This data can be packaged and sold as market intelligence reports to developers, banks, 
-            government agencies, and international investors. You now have the largest real-estate 
-            dataset in Malawi.
-          </p>
-        </div>
       </div>
     </div>
   );

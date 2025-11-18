@@ -270,13 +270,6 @@ export function Analytics() {
                 </p>
               </div>
 
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold text-purple-900 mb-1">Data Intelligence Value</h3>
-                <p className="text-sm text-purple-800">
-                  This data can be packaged and sold to developers, banks, and government
-                  agencies as market reports and insights.
-                </p>
-              </div>
             </div>
           </div>
         </div>
