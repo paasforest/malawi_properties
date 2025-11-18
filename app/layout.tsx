@@ -6,6 +6,10 @@ export const metadata = {
   title: 'Malawi Properties',
   description: 'Malawi Property Marketplace for the diaspora',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

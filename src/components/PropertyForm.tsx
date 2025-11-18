@@ -1,6 +1,7 @@
 import { X, Trash2, ImagePlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { uploadFileFromClient } from '../lib/storage';
 import type { Property, Agent, PropertyType, PropertyStatus } from '../lib/supabase';
 
 interface PropertyFormProps {
@@ -130,7 +131,7 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
       return [];
     }
 
-    console.log(`📸 Uploading ${newImages.length} image(s)...`);
+    console.log(`📸 Uploading ${newImages.length} image(s) to Hetzner Storage...`);
     const uploadedUrls: string[] = [];
 
     for (const image of newImages) {
@@ -139,24 +140,13 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
 
       console.log(`  Uploading: ${image.name} -> ${filePath}`);
 
-      const { error: uploadError } = await supabase.storage
-        .from('property-images')
-        .upload(filePath, image, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error(`  ❌ Upload failed for ${image.name}:`, uploadError);
-        throw new Error(`Failed to upload ${image.name}: ${uploadError.message}`);
-      }
-
-      const { data } = supabase.storage.from('property-images').getPublicUrl(filePath);
-      if (data?.publicUrl) {
-        console.log(`  ✅ Uploaded: ${data.publicUrl}`);
-        uploadedUrls.push(data.publicUrl);
-      } else {
-        console.warn(`  ⚠️ No public URL returned for ${filePath}`);
+      try {
+        const publicUrl = await uploadFileFromClient(image, filePath);
+        console.log(`  ✅ Uploaded: ${publicUrl}`);
+        uploadedUrls.push(publicUrl);
+      } catch (error: any) {
+        console.error(`  ❌ Upload failed for ${image.name}:`, error);
+        throw new Error(`Failed to upload ${image.name}: ${error.message || 'Unknown error'}`);
       }
     }
 

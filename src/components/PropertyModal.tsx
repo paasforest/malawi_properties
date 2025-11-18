@@ -3,6 +3,7 @@ import type { Property, Profile } from '../lib/supabase';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { BuyerDetailsForm } from './BuyerDetailsForm';
+import { getImageUrl, getValidImageUrls, handleImageError } from '../lib/imageUtils';
 
 interface PropertyModalProps {
   property: Property;
@@ -215,15 +216,23 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
 
           <div className="p-6">
             {/* Property Preview */}
-            {property.images && property.images.length > 0 && (
-              <div className="mb-6">
-                <img
-                  src={property.images[0]}
-                  alt={property.title}
-                  className="w-full h-64 object-cover rounded-lg"
-                />
-              </div>
-            )}
+            {(() => {
+              const validImages = getValidImageUrls(property.images);
+              if (validImages.length > 0) {
+                return (
+                  <div className="mb-6">
+                    <img
+                      src={getImageUrl(validImages[0])}
+                      alt={property.title}
+                      className="w-full h-64 object-cover rounded-lg"
+                      onError={handleImageError}
+                      loading="lazy"
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             <div className="flex items-center text-gray-600 mb-4">
               <MapPin size={18} className="mr-2" />
@@ -296,34 +305,43 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
         </div>
 
         <div className="p-4 sm:p-6">
-          {property.images && property.images.length > 0 ? (
-            <div className="mb-6">
-              <div className="relative h-48 sm:h-64 md:h-96 bg-gray-200 rounded-lg overflow-hidden">
-                <img
-                  src={property.images[currentImageIndex]}
-                  alt={property.title}
-                  className="w-full h-full object-cover"
-                />
-                {property.images.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                    {property.images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`w-2 h-2 rounded-full ${
-                          index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                        }`}
-                      />
-                    ))}
+          {(() => {
+            const validImages = getValidImageUrls(property.images);
+            if (validImages.length > 0) {
+              const safeIndex = Math.min(currentImageIndex, validImages.length - 1);
+              return (
+                <div className="mb-6">
+                  <div className="relative h-48 sm:h-64 md:h-96 bg-gray-200 rounded-lg overflow-hidden">
+                    <img
+                      src={getImageUrl(validImages[safeIndex])}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      onError={handleImageError}
+                      loading="lazy"
+                    />
+                    {validImages.length > 1 && (
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                        {validImages.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`w-2 h-2 rounded-full ${
+                              index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              );
+            }
+            return (
+              <div className="mb-6 h-96 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+                No Images Available
               </div>
-            </div>
-          ) : (
-            <div className="mb-6 h-96 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-              No Images Available
-            </div>
-          )}
+            );
+          })()}
 
           <div className="flex items-center gap-2 mb-4">
             {property.is_verified && (

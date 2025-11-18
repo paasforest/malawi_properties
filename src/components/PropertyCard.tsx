@@ -2,6 +2,7 @@
 
 import { MapPin, Bed, Bath, Maximize, Check, Eye, MessageSquare, Star } from 'lucide-react';
 import type { Property } from '../lib/supabase';
+import { getImageUrl, getValidImageUrls, handleImageError } from '../lib/imageUtils';
 
 interface PropertyCardProps {
   property: Property;
@@ -27,26 +28,53 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
     >
       {/* Image Section */}
       <div className="relative h-56 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
-        {property.images && Array.isArray(property.images) && property.images.length > 0 && property.images[0] ? (
-          <img
-            src={property.images[0]}
-            alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={(e) => {
-              console.error('❌ Image failed to load:', property.images[0]);
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        ) : null}
-        {(!property.images || !Array.isArray(property.images) || property.images.length === 0 || !property.images[0]) && (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
-            <div className="text-center">
-              <MapPin size={32} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No Image</p>
+        {(() => {
+          const validImages = getValidImageUrls(property.images);
+          const firstImage = validImages[0];
+          
+          if (firstImage) {
+            return (
+              <img
+                src={getImageUrl(firstImage)}
+                alt={property.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                onError={(e) => {
+                  handleImageError(e);
+                  // Show placeholder if image fails
+                  const placeholder = e.currentTarget.nextElementSibling;
+                  if (placeholder) {
+                    placeholder.classList.remove('hidden');
+                  }
+                  e.currentTarget.style.display = 'none';
+                }}
+                loading="lazy"
+              />
+            );
+          }
+          
+          return null;
+        })()}
+        {(() => {
+          const validImages = getValidImageUrls(property.images);
+          if (validImages.length === 0) {
+            return (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                <div className="text-center">
+                  <MapPin size={32} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No Image</p>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div className="hidden w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+              <div className="text-center">
+                <MapPin size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Image unavailable</p>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -73,11 +101,17 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
         </div>
 
         {/* Image Count Badge */}
-        {property.images && property.images.length > 1 && (
-          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
-            {property.images.length} photos
-          </div>
-        )}
+        {(() => {
+          const validImages = getValidImageUrls(property.images);
+          if (validImages.length > 1) {
+            return (
+              <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
+                {validImages.length} photos
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* View/Inquiry Stats Overlay */}
         <div className="absolute bottom-3 left-3 flex gap-3 text-white text-xs font-medium">
