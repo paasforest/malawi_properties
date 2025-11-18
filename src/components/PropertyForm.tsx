@@ -125,13 +125,19 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
   };
 
   const uploadImages = async (): Promise<string[]> => {
-    if (!newImages.length) return [];
+    if (!newImages.length) {
+      console.log('📸 No new images to upload');
+      return [];
+    }
 
+    console.log(`📸 Uploading ${newImages.length} image(s)...`);
     const uploadedUrls: string[] = [];
 
     for (const image of newImages) {
       const fileExt = image.name.split('.').pop() || 'jpg';
       const filePath = `property-${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      console.log(`  Uploading: ${image.name} -> ${filePath}`);
 
       const { error: uploadError } = await supabase.storage
         .from('property-images')
@@ -141,15 +147,20 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         });
 
       if (uploadError) {
-        throw new Error(uploadError.message);
+        console.error(`  ❌ Upload failed for ${image.name}:`, uploadError);
+        throw new Error(`Failed to upload ${image.name}: ${uploadError.message}`);
       }
 
       const { data } = supabase.storage.from('property-images').getPublicUrl(filePath);
       if (data?.publicUrl) {
+        console.log(`  ✅ Uploaded: ${data.publicUrl}`);
         uploadedUrls.push(data.publicUrl);
+      } else {
+        console.warn(`  ⚠️ No public URL returned for ${filePath}`);
       }
     }
 
+    console.log(`✅ All images uploaded: ${uploadedUrls.length} URL(s)`);
     return uploadedUrls;
   };
 
@@ -180,10 +191,19 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         reason_for_selling: formData.reason_for_selling || null,
         is_urgent_sale: formData.is_urgent_sale,
         status: formData.status,
-        images: combinedImages,
+        images: combinedImages.length > 0 ? combinedImages : [],
         agent_id: agent?.id || null,
         owner_id: agent ? null : userId,
       };
+
+      console.log('💾 Saving property data:', {
+        title: propertyData.title,
+        status: propertyData.status,
+        imagesCount: propertyData.images.length,
+        images: propertyData.images,
+        agent_id: propertyData.agent_id,
+        owner_id: propertyData.owner_id,
+      });
 
       if (property) {
         const { data: updatedProperty, error: updateError } = await supabase
@@ -225,13 +245,21 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         ? 'Property updated successfully!'
         : 'Property added successfully!';
 
+      console.log('✅ Property saved successfully:', {
+        id: savedProperty?.id,
+        title: savedProperty?.title,
+        status: savedProperty?.status,
+        imagesCount: savedProperty?.images?.length || 0,
+        images: savedProperty?.images,
+      });
+
       onSuccess({
         message: successMessage,
         property: savedProperty || undefined,
       });
     } catch (err: any) {
+      console.error('❌ Error saving property:', err);
       setError(err.message || 'Failed to save property');
-      console.error(err);
     } finally {
       setLoading(false);
     }

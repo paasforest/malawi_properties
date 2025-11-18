@@ -42,6 +42,7 @@ export function Marketplace() {
 
   const loadProperties = async () => {
     try {
+      console.log('🔍 Loading properties from database...');
       const { data, error } = await supabase
         .from('properties')
         .select('*')
@@ -49,14 +50,29 @@ export function Marketplace() {
         .order('is_featured', { ascending: false })
         .order('listed_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching properties:', error);
+        throw error;
+      }
+
+      console.log('✅ Properties loaded:', {
+        count: data?.length || 0,
+        properties: data?.map(p => ({
+          id: p.id,
+          title: p.title,
+          status: p.status,
+          imagesCount: p.images?.length || 0,
+          hasImages: Boolean(p.images && p.images.length > 0),
+          district: p.district,
+        })),
+      });
 
       setProperties(data || []);
 
       const uniqueDistricts = [...new Set(data?.map((p) => p.district) || [])];
       setDistricts(uniqueDistricts.sort());
     } catch (error) {
-      console.error('Error loading properties:', error);
+      console.error('❌ Error loading properties:', error);
     } finally {
       setLoading(false);
     }

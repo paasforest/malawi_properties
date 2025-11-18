@@ -53,11 +53,25 @@ export function Dashboard() {
         setAgent(agentData);
 
         if (agentData) {
-          const { data: propertiesData } = await supabase
+          const { data: propertiesData, error: propertiesError } = await supabase
             .from('properties')
             .select('*')
             .eq('agent_id', agentData.id)
             .order('created_at', { ascending: false });
+
+          if (propertiesError) {
+            console.error('❌ Error loading agent properties:', propertiesError);
+          } else {
+            console.log('✅ Agent properties loaded:', {
+              count: propertiesData?.length || 0,
+              properties: propertiesData?.map(p => ({
+                id: p.id,
+                title: p.title,
+                status: p.status,
+                imagesCount: p.images?.length || 0,
+              })),
+            });
+          }
 
           setProperties(propertiesData || []);
 
@@ -70,11 +84,25 @@ export function Dashboard() {
           setInquiries(inquiriesData || []);
         }
       } else if (profile?.user_type === 'owner') {
-        const { data: propertiesData } = await supabase
+        const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
           .eq('owner_id', authUser.id)
           .order('created_at', { ascending: false });
+
+        if (propertiesError) {
+          console.error('❌ Error loading owner properties:', propertiesError);
+        } else {
+          console.log('✅ Owner properties loaded:', {
+            count: propertiesData?.length || 0,
+            properties: propertiesData?.map(p => ({
+              id: p.id,
+              title: p.title,
+              status: p.status,
+              imagesCount: p.images?.length || 0,
+            })),
+          });
+        }
 
         setProperties(propertiesData || []);
 

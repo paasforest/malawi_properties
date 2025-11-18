@@ -27,13 +27,19 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
     >
       {/* Image Section */}
       <div className="relative h-56 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
-        {property.images && property.images.length > 0 ? (
+        {property.images && Array.isArray(property.images) && property.images.length > 0 && property.images[0] ? (
           <img
             src={property.images[0]}
             alt={property.title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={(e) => {
+              console.error('❌ Image failed to load:', property.images[0]);
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+            }}
           />
-        ) : (
+        ) : null}
+        {(!property.images || !Array.isArray(property.images) || property.images.length === 0 || !property.images[0]) && (
           <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
             <div className="text-center">
               <MapPin size={32} className="mx-auto mb-2 opacity-50" />
