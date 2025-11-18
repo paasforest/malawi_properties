@@ -14,7 +14,10 @@ if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
 
 // Use placeholder values during build if env vars are missing (build will succeed)
 // Runtime will fail gracefully if not set, but build won't fail
-const cleanUrl = supabaseUrl ? supabaseUrl.replace(/\/$/, '') : 'https://placeholder.supabase.co';
+// Ensure URL has https:// protocol and no trailing slash
+const cleanUrl = supabaseUrl 
+  ? supabaseUrl.replace(/\/$/, '').replace(/^(https?:\/\/)?/, 'https://')
+  : 'https://placeholder.supabase.co';
 const safeKey = supabaseAnonKey || 'placeholder-key';
 
 export const supabase = createClient(cleanUrl, safeKey, {
