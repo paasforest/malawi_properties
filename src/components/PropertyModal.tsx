@@ -135,6 +135,13 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
       // Detect device type
       const deviceType = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
 
+      // Get or create session
+      const { getCurrentSessionId, getOrCreateSession } = await import('../lib/sessionTracking');
+      let sessionId = getCurrentSessionId();
+      if (!sessionId) {
+        sessionId = await getOrCreateSession();
+      }
+
       // Record property view
       const { data: viewData } = await supabase.from('property_views').insert({
         property_id: property.id,
@@ -145,7 +152,10 @@ export function PropertyModal({ property, onClose, onInquire }: PropertyModalPro
         viewer_origin_type: viewerOriginType,
         viewer_local_city: viewerLocalCity,
         device_type: deviceType,
+        session_id: sessionId,
         viewing_duration: 0,
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent,
       }).select('id').single();
 
       if (viewData) {

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
   TrendingUp, MapPin, Building2, Users, DollarSign, Clock, 
-  Globe, BarChart3, Target, PieChart, Activity, Award
+  Globe, BarChart3, Target, PieChart, Activity, Award, TrendingDown
 } from 'lucide-react';
+import type { PriceHistory } from '../lib/supabase';
 
 interface DistrictIntelligence {
   district: string;
@@ -40,10 +41,21 @@ interface DiasporaPattern {
   preferredPropertyTypes: string[];
 }
 
+interface PriceTrend {
+  district: string;
+  property_type: string;
+  current_average_price: number;
+  previous_average_price: number;
+  price_change: number;
+  price_change_percentage: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
 export function MarketIntelligence() {
   const [districtData, setDistrictData] = useState<DistrictIntelligence[]>([]);
   const [agentPerformance, setAgentPerformance] = useState<AgentPerformance[]>([]);
   const [diasporaPatterns, setDiasporaPatterns] = useState<DiasporaPattern[]>([]);
+  const [priceTrends, setPriceTrends] = useState<PriceTrend[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
@@ -64,6 +76,10 @@ export function MarketIntelligence() {
       const { data: agents } = await supabase
         .from('agents')
         .select('*, profiles(full_name), properties(*)');
+      const { data: priceHistory } = await supabase
+        .from('price_history')
+        .select('*, properties(district, property_type)')
+        .order('recorded_at', { ascending: false });
 
       // Calculate District Intelligence
       const districtMap = new Map<string, DistrictIntelligence>();
@@ -243,6 +259,71 @@ export function MarketIntelligence() {
 
       setDiasporaPatterns(processedDiaspora);
 
+      // Calculate Price Trends
+      const priceTrendMap = new Map<string, {
+        district: string;
+        property_type: string;
+        prices: number[];
+        dates: Date[];
+      }>();
+
+      priceHistory?.forEach((ph: any) => {
+        const prop = ph.properties;
+        if (!prop?.district || !prop?.property_type) return;
+
+        const key = `${prop.district}_${prop.property_type}`;
+        if (!priceTrendMap.has(key)) {
+          priceTrendMap.set(key, {
+            district: prop.district,
+            property_type: prop.property_type,
+            prices: [],
+            dates: [],
+          });
+        }
+
+        const trend = priceTrendMap.get(key)!;
+        trend.prices.push(Number(ph.price));
+        trend.dates.push(new Date(ph.recorded_at));
+      });
+
+      // Calculate price changes (current vs 30 days ago)
+      const trends: PriceTrend[] = [];
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      priceTrendMap.forEach((trend, key) => {
+        // Sort by date
+        const sorted = trend.prices.map((price, idx) => ({
+          price,
+          date: trend.dates[idx],
+        })).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        if (sorted.length < 2) return;
+
+        const currentPrices = sorted.filter((s) => s.date >= thirtyDaysAgo).map((s) => s.price);
+        const previousPrices = sorted.filter((s) => s.date < thirtyDaysAgo && s.date >= new Date(thirtyDaysAgo.getTime() - 30 * 24 * 60 * 60 * 1000)).map((s) => s.price);
+
+        if (currentPrices.length === 0 || previousPrices.length === 0) return;
+
+        const currentAvg = currentPrices.reduce((sum, p) => sum + p, 0) / currentPrices.length;
+        const previousAvg = previousPrices.reduce((sum, p) => sum + p, 0) / previousPrices.length;
+
+        const priceChange = currentAvg - previousAvg;
+        const priceChangePercentage = previousAvg > 0 ? (priceChange / previousAvg) * 100 : 0;
+
+        trends.push({
+          district: trend.district,
+          property_type: trend.property_type,
+          current_average_price: currentAvg,
+          previous_average_price: previousAvg,
+          price_change: priceChange,
+          price_change_percentage: priceChangePercentage,
+          trend: priceChangePercentage > 5 ? 'up' : priceChangePercentage < -5 ? 'down' : 'stable',
+        });
+      });
+
+      setPriceTrends(trends.sort((a, b) => Math.abs(b.price_change_percentage) - Math.abs(a.price_change_percentage)));
+
     } catch (error) {
       console.error('Error loading market intelligence:', error);
     } finally {
@@ -403,6 +484,80 @@ export function MarketIntelligence() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Price Trends */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <TrendingUp className="text-green-600" size={24} />
+            Price Trends (Last 30 Days)
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">District</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Property Type</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Current Avg</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Previous Avg</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Change</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">% Change</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {priceTrends.slice(0, 20).map((trend, idx) => (
+                  <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4 font-medium">{trend.district}</td>
+                    <td className="py-3 px-4 capitalize">{trend.property_type}</td>
+                    <td className="py-3 px-4">
+                      MWK {Math.round(trend.current_average_price).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      MWK {Math.round(trend.previous_average_price).toLocaleString()}
+                    </td>
+                    <td className={`py-3 px-4 font-semibold ${
+                      trend.price_change > 0 ? 'text-green-600' : 
+                      trend.price_change < 0 ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {trend.price_change > 0 ? '+' : ''}
+                      MWK {Math.round(trend.price_change).toLocaleString()}
+                    </td>
+                    <td className={`py-3 px-4 font-semibold ${
+                      trend.price_change_percentage > 0 ? 'text-green-600' : 
+                      trend.price_change_percentage < 0 ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {trend.price_change_percentage > 0 ? '+' : ''}
+                      {trend.price_change_percentage.toFixed(1)}%
+                    </td>
+                    <td className="py-3 px-4">
+                      {trend.trend === 'up' ? (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <TrendingUp size={16} />
+                          <span className="text-sm font-semibold">Up</span>
+                        </div>
+                      ) : trend.trend === 'down' ? (
+                        <div className="flex items-center gap-1 text-red-600">
+                          <TrendingDown size={16} />
+                          <span className="text-sm font-semibold">Down</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Activity size={16} />
+                          <span className="text-sm font-semibold">Stable</span>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {priceTrends.length === 0 && (
+            <p className="text-center text-gray-500 py-8">
+              Price trend data will appear as properties are added and prices change over time.
+            </p>
+          )}
         </div>
 
         {/* Diaspora Buyer Patterns */}

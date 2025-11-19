@@ -1,4 +1,6 @@
 import { Search } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { trackSearchQuery, getCurrentSessionId } from '../lib/sessionTracking';
 
 interface PropertyFiltersProps {
   filters: {
@@ -11,9 +13,65 @@ interface PropertyFiltersProps {
   };
   onChange: (filters: any) => void;
   districts: string[];
+  resultsCount?: number;
 }
 
-export function PropertyFilters({ filters, onChange, districts }: PropertyFiltersProps) {
+export function PropertyFilters({ filters, onChange, districts, resultsCount = 0 }: PropertyFiltersProps) {
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSearchRef = useRef<string>('');
+
+  // Track search queries (debounced)
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Create search signature to detect changes
+    const searchSignature = JSON.stringify({
+      search: filters.search,
+      propertyType: filters.propertyType,
+      district: filters.district,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      currency: filters.currency,
+    });
+
+    // Skip if search hasn't changed
+    if (searchSignature === lastSearchRef.current) {
+      return;
+    }
+
+    // Debounce search tracking (wait 1 second after user stops typing)
+    searchTimeoutRef.current = setTimeout(async () => {
+      // Only track if user has actually applied filters (not initial load)
+      if (filters.search || filters.propertyType || filters.district || filters.minPrice || filters.maxPrice || filters.currency) {
+        const sessionId = getCurrentSessionId();
+        if (sessionId) {
+          await trackSearchQuery(
+            sessionId,
+            filters.search,
+            {
+              district: filters.district || undefined,
+              property_type: filters.propertyType || undefined,
+              min_price: filters.minPrice || undefined,
+              max_price: filters.maxPrice || undefined,
+              currency: filters.currency || undefined,
+            },
+            resultsCount
+          );
+          lastSearchRef.current = searchSignature;
+        }
+      }
+    }, 1000);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [filters, resultsCount]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

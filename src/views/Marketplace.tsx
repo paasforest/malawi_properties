@@ -14,6 +14,7 @@ import { HowItWorks } from '../components/HowItWorks';
 import { TrustSection } from '../components/TrustSection';
 import { Testimonials } from '../components/Testimonials';
 import { CTASection } from '../components/CTASection';
+import { getOrCreateSession } from '../lib/sessionTracking';
 
 export function Marketplace() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -33,6 +34,8 @@ export function Marketplace() {
   });
 
   useEffect(() => {
+    // Initialize user session tracking
+    getOrCreateSession();
     loadProperties();
   }, []);
 
@@ -167,7 +170,12 @@ export function Marketplace() {
 
           {/* Filters */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <PropertyFilters filters={filters} onChange={setFilters} districts={districts} />
+            <PropertyFilters 
+              filters={filters} 
+              onChange={setFilters} 
+              districts={districts}
+              resultsCount={filteredProperties.length}
+            />
           </div>
 
           {/* Results Count */}

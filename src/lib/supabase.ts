@@ -120,3 +120,65 @@ export interface Inquiry {
   created_at: string;
   responded_at: string | null;
 }
+
+export interface SearchQuery {
+  id: string;
+  user_id: string | null;
+  session_id: string | null;
+  search_text: string | null;
+  search_params: {
+    district?: string;
+    property_type?: string;
+    min_price?: string;
+    max_price?: string;
+    currency?: string;
+    bedrooms?: number;
+    bathrooms?: number;
+  };
+  results_count: number;
+  viewed_property_ids: string[];
+  inquired_property_ids: string[];
+  converted_to_inquiry: boolean;
+  created_at: string;
+}
+
+export interface UserSession {
+  id: string;
+  user_id: string | null;
+  session_start: string;
+  session_end: string | null;
+  duration_seconds: number;
+  properties_viewed_count: number;
+  properties_viewed_ids: string[];
+  properties_inquired_count: number;
+  properties_inquired_ids: string[];
+  search_queries_count: number;
+  conversion_funnel: {
+    searches?: number;
+    views?: number;
+    detail_views?: number;
+    inquiries?: number;
+  };
+  viewer_location: string | null;
+  viewer_country: string | null;
+  viewer_city: string | null;
+  viewer_origin_type: 'diaspora' | 'local' | null;
+  device_type: 'mobile' | 'desktop' | null;
+  user_agent: string | null;
+  referrer: string | null;
+  created_at: string;
+}
+
+export interface PriceHistory {
+  id: string;
+  property_id: string;
+  price: number;
+  currency: string;
+  previous_price: number | null;
+  price_change: number | null;
+  price_change_percentage: number | null;
+  recorded_at: string;
+  recorded_by: string | null;
+  change_reason: string | null;
+  created_at: string;
+}
