@@ -42,7 +42,6 @@ export function Marketplace() {
 
   const loadProperties = async () => {
     try {
-      console.log('🔍 Loading properties from database...');
       const { data, error } = await supabase
         .from('properties')
         .select('*')
@@ -54,18 +53,6 @@ export function Marketplace() {
         console.error('❌ Error fetching properties:', error);
         throw error;
       }
-
-      console.log('✅ Properties loaded:', {
-        count: data?.length || 0,
-        properties: data?.map(p => ({
-          id: p.id,
-          title: p.title,
-          status: p.status,
-          imagesCount: p.images?.length || 0,
-          hasImages: Boolean(p.images && p.images.length > 0),
-          district: p.district,
-        })),
-      });
 
       setProperties(data || []);
 

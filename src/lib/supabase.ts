@@ -27,12 +27,6 @@ if (typeof window !== 'undefined') {
       keyPreview: supabaseAnonKey.substring(0, 30) + '...',
       message: 'Anon key appears to be a placeholder or too short. Please check Vercel environment variables.'
     });
-  } else {
-    console.log('✅ Supabase initialized:', {
-      url: `${cleanUrl.substring(0, 30)}...`,
-      keyLength: safeKey.length,
-      keyPreview: `${safeKey.substring(0, 20)}...`
-    });
   }
 }
 

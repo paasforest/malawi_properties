@@ -34,6 +34,7 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     price: '',
     currency: 'MWK',
     plot_size: '',
+    plot_dimensions: '', // e.g., "23 by 25" or "23x25"
     bedrooms: '',
     bathrooms: '',
     has_title_deed: false,
@@ -58,6 +59,7 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
         price: property.price.toString(),
         currency: property.currency,
         plot_size: property.plot_size?.toString() || '',
+        plot_dimensions: '', // Will be calculated if needed
         bedrooms: property.bedrooms.toString(),
         bathrooms: property.bathrooms.toString(),
         has_title_deed: property.has_title_deed,
@@ -123,6 +125,47 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
       if (removed) URL.revokeObjectURL(removed);
       return updated;
     });
+  };
+
+  // Parse dimensions like "23 by 25" or "23x25" and calculate square meters
+  const parseDimensions = (dimensions: string): number | null => {
+    if (!dimensions || !dimensions.trim()) return null;
+    
+    // Remove extra spaces and convert to lowercase
+    const clean = dimensions.trim().toLowerCase();
+    
+    // Try "by" format: "23 by 25" or "23 by 25 meters"
+    const byMatch = clean.match(/(\d+(?:\.\d+)?)\s*by\s*(\d+(?:\.\d+)?)/);
+    if (byMatch) {
+      const width = parseFloat(byMatch[1]);
+      const length = parseFloat(byMatch[2]);
+      if (!isNaN(width) && !isNaN(length) && width > 0 && length > 0) {
+        return Math.round(width * length * 100) / 100; // Round to 2 decimal places
+      }
+    }
+    
+    // Try "x" format: "23x25" or "23 x 25"
+    const xMatch = clean.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/);
+    if (xMatch) {
+      const width = parseFloat(xMatch[1]);
+      const length = parseFloat(xMatch[2]);
+      if (!isNaN(width) && !isNaN(length) && width > 0 && length > 0) {
+        return Math.round(width * length * 100) / 100;
+      }
+    }
+    
+    return null;
+  };
+
+  const handleDimensionsChange = (value: string) => {
+    const calculatedSize = parseDimensions(value);
+    if (calculatedSize !== null) {
+      setFormData(prev => ({ ...prev, plot_dimensions: value, plot_size: calculatedSize.toString() }));
+    } else if (!value.trim()) {
+      setFormData(prev => ({ ...prev, plot_dimensions: value, plot_size: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, plot_dimensions: value }));
+    }
   };
 
   const uploadImages = async (): Promise<string[]> => {
@@ -476,14 +519,32 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Plot Size (m²)
+                Plot Dimensions (meters)
+              </label>
+              <input
+                type="text"
+                value={formData.plot_dimensions}
+                onChange={(e) => handleDimensionsChange(e.target.value)}
+                placeholder="e.g., 23 by 25 or 23x25"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Enter dimensions like "23 by 25" or "23x25" (automatically calculates area)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plot Size (m²) <span className="text-gray-400 text-xs">(calculated automatically)</span>
               </label>
               <input
                 type="number"
                 value={formData.plot_size}
                 onChange={(e) => setFormData({ ...formData, plot_size: e.target.value })}
                 placeholder="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                readOnly={!!formData.plot_dimensions}
+                title={formData.plot_dimensions ? "Calculated from dimensions above" : ""}
               />
             </div>
 
