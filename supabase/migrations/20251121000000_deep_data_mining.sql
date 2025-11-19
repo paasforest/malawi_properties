@@ -129,14 +129,9 @@ DECLARE
   price_diff numeric;
   price_percentage numeric;
 BEGIN
-  -- Get previous price from most recent price history entry
-  SELECT price INTO prev_price
-  FROM price_history
-  WHERE property_id = NEW.id
-  ORDER BY recorded_at DESC
-  LIMIT 1;
-
-  SELECT currency INTO prev_currency
+  -- Get previous price and currency from most recent price history entry
+  SELECT price, currency 
+  INTO prev_price, prev_currency
   FROM price_history
   WHERE property_id = NEW.id
   ORDER BY recorded_at DESC
