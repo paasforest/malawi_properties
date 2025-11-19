@@ -197,6 +197,57 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     return uploadedUrls;
   };
 
+  const handleDelete = async () => {
+    if (!property) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${property.title}"?\n\nThis action cannot be undone. The property and all its associated data will be permanently removed.`
+    );
+
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Note: Images in Hetzner storage are not deleted automatically
+      // They can be cleaned up manually from Hetzner console if needed
+      // This is to avoid needing an API route for file deletion
+      console.log(`🗑️ Deleting property: ${property.title}`);
+      if (existingImages.length > 0) {
+        console.log(`  Note: ${existingImages.length} image(s) remain in Hetzner storage (can be cleaned up manually)`);
+      }
+
+      // Delete property from database
+      const { error: deleteError } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', property.id);
+
+      if (deleteError) throw deleteError;
+
+      // Update agent total_listings count if applicable
+      if (agent && agent.total_listings > 0) {
+        await supabase
+          .from('agents')
+          .update({ total_listings: Math.max(0, agent.total_listings - 1) })
+          .eq('id', agent.id);
+      }
+
+      console.log('✅ Property deleted successfully:', property.id);
+
+      onSuccess({
+        message: 'Property deleted successfully!',
+      });
+
+      onClose();
+    } catch (err: any) {
+      console.error('❌ Error deleting property:', err);
+      setError(err.message || 'Failed to delete property');
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -628,6 +679,17 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
           </div>
 
           <div className="flex gap-3 mt-6">
+            {property && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Trash2 size={18} />
+                Delete
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
