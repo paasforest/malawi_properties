@@ -134,7 +134,7 @@ export function AdminDashboard() {
         { data: allPropertyViews }
       ] = await Promise.all([
         supabase.from('profiles').select('*'),
-        supabase.from('agents').select('*'),
+        supabase.from('agents').select('*, profiles(full_name, email, phone, current_location, created_at)'),
         supabase.from('properties').select('*'),
         supabase.from('inquiries').select('*, profiles(is_diaspora, current_location), properties(title, district)'),
         supabase.from('property_views').select('*'),
@@ -759,6 +759,41 @@ export function AdminDashboard() {
     }
   };
 
+  const handleVerifyAgent = async (agentId: string, status: 'verified' | 'rejected') => {
+    if (!confirm(`Are you sure you want to ${status === 'verified' ? 'approve' : 'reject'} this agent?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({ verification_status: status })
+        .eq('id', agentId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Also update the profile's is_verified status if approving
+      if (status === 'verified') {
+        const agent = pendingVerifications.find((a: any) => a.id === agentId);
+        if (agent?.user_id) {
+          await supabase
+            .from('profiles')
+            .update({ is_verified: true })
+            .eq('id', agent.user_id);
+        }
+      }
+
+      // Reload dashboard data
+      await loadDashboardData();
+      alert(`Agent ${status === 'verified' ? 'approved' : 'rejected'} successfully!`);
+    } catch (error: any) {
+      console.error('Error updating agent verification:', error);
+      alert(`Error: ${error.message || 'Failed to update verification status'}`);
+    }
+  };
+
   const exportData = async (type: string) => {
     try {
       let data: any[] = [];
@@ -1039,8 +1074,74 @@ export function AdminDashboard() {
                 {pendingVerifications.length}
               </span>
             </div>
-            <div className="text-yellow-800">
-              {pendingVerifications.length} agent verification(s) pending review
+            <div className="space-y-4">
+              {pendingVerifications.map((agent: any) => {
+                const profile = agent.profiles || {};
+                return (
+                  <div key={agent.id} className="bg-white rounded-lg p-4 border border-yellow-300">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {profile.full_name || 'No name provided'}
+                          </h3>
+                          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
+                            Pending
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                          <div>
+                            <span className="font-medium">Email:</span> {profile.email || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Phone:</span> {profile.phone || agent.phone || 'N/A'}
+                          </div>
+                          {agent.company_name && (
+                            <div>
+                              <span className="font-medium">Company:</span> {agent.company_name}
+                            </div>
+                          )}
+                          {agent.license_number && (
+                            <div>
+                              <span className="font-medium">License:</span> {agent.license_number}
+                            </div>
+                          )}
+                          {profile.current_location && (
+                            <div>
+                              <span className="font-medium">Location:</span> {profile.current_location}
+                            </div>
+                          )}
+                          {agent.districts_covered && agent.districts_covered.length > 0 && (
+                            <div>
+                              <span className="font-medium">Districts:</span> {agent.districts_covered.join(', ')}
+                            </div>
+                          )}
+                          <div>
+                            <span className="font-medium">Registered:</span>{' '}
+                            {new Date(agent.created_at || profile.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          onClick={() => handleVerifyAgent(agent.id, 'verified')}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                        >
+                          <CheckCircle size={18} />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleVerifyAgent(agent.id, 'rejected')}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                        >
+                          <XCircle size={18} />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
