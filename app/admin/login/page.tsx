@@ -11,6 +11,8 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -214,6 +216,32 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (!email) {
+        setError('Please enter your email address');
+        setLoading(false);
+        return;
+      }
+
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/admin/reset-password`,
+      });
+
+      if (resetError) throw resetError;
+
+      setResetEmailSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -273,9 +301,20 @@ export default function AdminLoginPage() {
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                {!showResetPassword && (
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(true)}
+                    className="text-sm text-red-600 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="text-gray-400" size={20} />
@@ -285,32 +324,86 @@ export default function AdminLoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="block w-full pl-10 pr-3 py-3.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 placeholder-gray-400 text-base min-h-[44px]"
+                  required={!showResetPassword}
+                  disabled={showResetPassword}
+                  className="block w-full pl-10 pr-3 py-3.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 placeholder-gray-400 text-base min-h-[44px] disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-red-600 text-white py-3.5 sm:py-3 px-4 rounded-lg font-semibold hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base min-h-[44px]"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Logging in...</span>
-                </>
-              ) : (
-                <>
-                  <Shield size={20} />
-                  <span>Login</span>
-                </>
-              )}
-            </button>
+            {/* Submit Button or Reset Password */}
+            {showResetPassword ? (
+              <>
+                {resetEmailSent ? (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 font-medium mb-2">
+                      ✅ Password reset email sent!
+                    </p>
+                    <p className="text-sm text-green-700">
+                      Check your email ({email}) for a password reset link. Click the link to reset your password.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowResetPassword(false);
+                        setResetEmailSent(false);
+                      }}
+                      className="mt-4 text-sm text-red-600 hover:underline"
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={loading || !email}
+                      className="w-full bg-red-600 text-white py-3.5 sm:py-3 px-4 rounded-lg font-semibold hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base min-h-[44px]"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Sending...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail size={20} />
+                          <span>Send Reset Link</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword(false)}
+                      className="w-full mt-3 border border-gray-300 text-gray-700 py-3.5 sm:py-3 px-4 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-red-600 text-white py-3.5 sm:py-3 px-4 rounded-lg font-semibold hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base min-h-[44px]"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield size={20} />
+                    <span>Login</span>
+                  </>
+                )}
+              </button>
+            )}
           </form>
 
           {/* Info Box */}

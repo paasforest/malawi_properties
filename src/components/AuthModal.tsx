@@ -11,6 +11,8 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -89,6 +91,32 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (!formData.email) {
+        setError('Please enter your email address');
+        setLoading(false);
+        return;
+      }
+
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (resetError) throw resetError;
+
+      setResetEmailSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -133,15 +161,27 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Password *
+                </label>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(true)}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <input
                 type="password"
-                required
+                required={!showResetPassword}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={showResetPassword}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -224,13 +264,56 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
-          </button>
+          {showResetPassword ? (
+            <>
+              {resetEmailSent ? (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800 font-medium mb-2">
+                    ✅ Password reset email sent!
+                  </p>
+                  <p className="text-sm text-green-700">
+                    Check your email ({formData.email}) for a password reset link. Click the link to reset your password.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowResetPassword(false);
+                      setResetEmailSent(false);
+                    }}
+                    className="mt-4 text-sm text-blue-600 hover:underline"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={loading || !formData.email}
+                    className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(false)}
+                    className="w-full mt-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </button>
+          )}
 
           <div className="mt-4 text-center">
             <button
