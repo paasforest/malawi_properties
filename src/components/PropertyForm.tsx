@@ -210,12 +210,36 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
     setError('');
 
     try {
-      // Note: Images in Hetzner storage are not deleted automatically
-      // They can be cleaned up manually from Hetzner console if needed
-      // This is to avoid needing an API route for file deletion
       console.log(`🗑️ Deleting property: ${property.title}`);
+
+      // Delete images from Hetzner storage
       if (existingImages.length > 0) {
-        console.log(`  Note: ${existingImages.length} image(s) remain in Hetzner storage (can be cleaned up manually)`);
+        console.log(`🗑️ Deleting ${existingImages.length} image(s) from Hetzner storage...`);
+        for (const imageUrl of existingImages) {
+          try {
+            // Only delete Hetzner images (skip Supabase URLs)
+            if (imageUrl.includes('your-objectstorage.com') || imageUrl.includes('hetzner')) {
+              const response = await fetch('/api/delete-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Delete failed' }));
+                console.warn(`  ⚠️ Failed to delete image ${imageUrl}:`, error.error || error.message);
+                // Continue with property deletion even if image deletion fails
+              } else {
+                console.log(`  ✅ Deleted image: ${imageUrl}`);
+              }
+            } else {
+              console.log(`  ⏭️ Skipping Supabase image (bucket may be deleted): ${imageUrl}`);
+            }
+          } catch (imgError) {
+            console.warn(`  ⚠️ Error deleting image ${imageUrl}:`, imgError);
+            // Continue with property deletion even if image deletion fails
+          }
+        }
       }
 
       // Delete property from database
@@ -226,13 +250,15 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
 
       if (deleteError) throw deleteError;
 
-      // Update agent total_listings count if applicable
+      // Update agent total_listings count if applicable (only for agents, not owners)
       if (agent && agent.total_listings > 0) {
         await supabase
           .from('agents')
           .update({ total_listings: Math.max(0, agent.total_listings - 1) })
           .eq('id', agent.id);
       }
+
+      // Note: Owners don't have a total_listings field, so no update needed for them
 
       console.log('✅ Property deleted successfully:', property.id);
 
