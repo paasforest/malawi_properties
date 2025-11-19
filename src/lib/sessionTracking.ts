@@ -187,12 +187,14 @@ export async function trackSearchQuery(
       return null;
     }
 
-    // Update session search count
-    await supabase.rpc('update_user_session_search_count', {
-      session_uuid: sessionId,
-    }).catch(() => {
+    // Update session search count (function might not exist yet, ignore error)
+    try {
+      await supabase.rpc('update_user_session_search_count', {
+        session_uuid: sessionId,
+      });
+    } catch {
       // Function might not exist yet, ignore error
-    });
+    }
 
     return data.id;
   } catch (error) {

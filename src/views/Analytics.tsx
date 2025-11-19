@@ -186,17 +186,20 @@ export function Analytics() {
         }
 
         // District searches
-        if (sq.search_params?.district) {
+        const district = sq.search_params?.district;
+        if (district) {
           districtSearchesMap.set(
-            sq.search_params.district,
-            (districtSearchesMap.get(sq.search_params.district) || 0) + 1
+            district,
+            (districtSearchesMap.get(district) || 0) + 1
           );
         }
 
         // Price range searches
-        if (sq.search_params?.min_price || sq.search_params?.max_price) {
-          const min = sq.search_params.min_price || '0';
-          const max = sq.search_params.max_price || '∞';
+        const minPrice = sq.search_params?.minPrice || sq.search_params?.min_price;
+        const maxPrice = sq.search_params?.maxPrice || sq.search_params?.max_price;
+        if (minPrice || maxPrice) {
+          const min = minPrice || '0';
+          const max = maxPrice || '∞';
           const range = `${min} - ${max}`;
           priceRangeSearchesMap.set(range, (priceRangeSearchesMap.get(range) || 0) + 1);
         }

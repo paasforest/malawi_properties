@@ -53,9 +53,9 @@ export function PropertyFilters({ filters, onChange, districts, resultsCount = 0
             filters.search,
             {
               district: filters.district || undefined,
-              property_type: filters.propertyType || undefined,
-              min_price: filters.minPrice || undefined,
-              max_price: filters.maxPrice || undefined,
+              propertyType: filters.propertyType || undefined,
+              minPrice: filters.minPrice || undefined,
+              maxPrice: filters.maxPrice || undefined,
               currency: filters.currency || undefined,
             },
             resultsCount

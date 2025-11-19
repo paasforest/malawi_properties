@@ -128,9 +128,12 @@ export interface SearchQuery {
   search_text: string | null;
   search_params: {
     district?: string;
-    property_type?: string;
-    min_price?: string;
-    max_price?: string;
+    propertyType?: string;
+    property_type?: string; // Legacy support
+    minPrice?: string;
+    min_price?: string; // Legacy support
+    maxPrice?: string;
+    max_price?: string; // Legacy support
     currency?: string;
     bedrooms?: number;
     bathrooms?: number;

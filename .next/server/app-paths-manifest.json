@@ -1,1 +1,17 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/reset-password/page": "app/admin/reset-password/page.js",
+  "/analytics/page": "app/analytics/page.js",
+  "/api/delete-image/route": "app/api/delete-image/route.js",
+  "/api/end-session/route": "app/api/end-session/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/buyer/page": "app/buyer/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/intelligence/page": "app/intelligence/page.js",
+  "/page": "app/page.js",
+  "/reset-password/page": "app/reset-password/page.js",
+  "/setup/admin/page": "app/setup/admin/page.js",
+  "/setup/test-users/page": "app/setup/test-users/page.js"
+}
