@@ -17,10 +17,12 @@ CREATE TABLE IF NOT EXISTS search_queries (
 
 ALTER TABLE search_queries ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can create search queries" ON search_queries;
 CREATE POLICY "Anyone can create search queries"
   ON search_queries FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Admins can view all search queries" ON search_queries;
 CREATE POLICY "Admins can view all search queries"
   ON search_queries FOR SELECT
   TO authenticated
@@ -64,15 +66,18 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can create user sessions" ON user_sessions;
 CREATE POLICY "Anyone can create user sessions"
   ON user_sessions FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can view their own sessions" ON user_sessions;
 CREATE POLICY "Users can view their own sessions"
   ON user_sessions FOR SELECT
   TO authenticated
   USING (user_id = auth.uid() OR user_id IS NULL);
 
+DROP POLICY IF EXISTS "Admins can view all sessions" ON user_sessions;
 CREATE POLICY "Admins can view all sessions"
   ON user_sessions FOR SELECT
   TO authenticated
@@ -107,10 +112,12 @@ CREATE TABLE IF NOT EXISTS price_history (
 
 ALTER TABLE price_history ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can create price history" ON price_history;
 CREATE POLICY "Anyone can create price history"
   ON price_history FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public can view price history" ON price_history;
 CREATE POLICY "Public can view price history"
   ON price_history FOR SELECT
   USING (true);
