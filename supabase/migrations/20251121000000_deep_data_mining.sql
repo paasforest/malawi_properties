@@ -204,21 +204,26 @@ BEGIN
     FOR type_rec IN
       SELECT DISTINCT property_type FROM properties WHERE property_type IS NOT NULL
     LOOP
-      -- Calculate views and inquiries for this district/type combination
-      SELECT 
-        COALESCE(SUM(p.views_count), 0) as views,
-        COALESCE(SUM(p.inquiries_count), 0) as inquiries
-      INTO total_views, total_inquiries
+      -- Calculate views for this district/type combination
+      SELECT COALESCE(SUM(p.views_count), 0)
+      INTO total_views
       FROM properties p
       WHERE p.district = district_rec.district
         AND p.property_type = type_rec.property_type
         AND DATE_TRUNC('month', p.listed_at) = DATE_TRUNC('month', period_date);
 
+      -- Calculate inquiries for this district/type combination
+      SELECT COUNT(DISTINCT i.id)
+      INTO total_inquiries
+      FROM inquiries i
+      JOIN properties p ON i.property_id = p.id
+      WHERE p.district = district_rec.district
+        AND p.property_type = type_rec.property_type
+        AND DATE_TRUNC('month', i.created_at) = DATE_TRUNC('month', period_date);
+
       -- Calculate diaspora inquiry percentage
-      SELECT 
-        COUNT(DISTINCT i.id),
-        COUNT(DISTINCT CASE WHEN pr.is_diaspora THEN i.id END)
-      INTO total_inquiries, diaspora_inquiries
+      SELECT COUNT(DISTINCT CASE WHEN pr.is_diaspora THEN i.id END)
+      INTO diaspora_inquiries
       FROM inquiries i
       JOIN properties p ON i.property_id = p.id
       JOIN profiles pr ON i.buyer_id = pr.id
