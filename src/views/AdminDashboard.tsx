@@ -7,7 +7,7 @@ import {
   Users, Building2, TrendingUp, Eye, MessageSquare, MapPin,
   DollarSign, Clock, Shield, AlertCircle, CheckCircle, XCircle,
   Download, RefreshCw, BarChart3, PieChart, Activity, Globe,
-  HardDrive, Server, Zap, History, ExternalLink
+  HardDrive, Server, Zap, History, ExternalLink, Search, Target, Brain
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -829,6 +829,20 @@ export function AdminDashboard() {
             <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Comprehensive data monitoring and analytics</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <a
+              href="/analytics"
+              className="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+            >
+              <Search size={18} />
+              <span>Analytics</span>
+            </a>
+            <a
+              href="/intelligence"
+              className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+            >
+              <Brain size={18} />
+              <span>Intelligence</span>
+            </a>
             <button
               onClick={loadDashboardData}
               className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
