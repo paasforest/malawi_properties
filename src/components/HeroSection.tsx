@@ -53,7 +53,15 @@ export function HeroSection({ onSearch, districts }: HeroSectionProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSearch) {
-      onSearch(searchQuery);
+      // Pass all search criteria
+      const searchParams = new URLSearchParams();
+      if (searchQuery) searchParams.set('q', searchQuery);
+      if (propertyType) searchParams.set('type', propertyType);
+      if (district) searchParams.set('district', district);
+      
+      // Combine all into search string for onSearch callback
+      const combinedQuery = searchParams.toString();
+      onSearch(combinedQuery || searchQuery);
     }
   };
 
@@ -80,23 +88,25 @@ export function HeroSection({ onSearch, districts }: HeroSectionProps) {
           </p>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-2xl p-2 md:p-4 mb-12">
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+          <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 mb-12">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+              {/* Search Input - More Prominent */}
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" size={22} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search properties, districts, or areas..."
-                  className="w-full pl-12 pr-4 py-3 md:py-4 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg"
+                  className="w-full pl-12 pr-4 py-4 md:py-5 text-gray-900 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg font-medium shadow-sm"
                 />
               </div>
 
+              {/* Property Type Filter */}
               <select
                 value={propertyType}
                 onChange={(e) => setPropertyType(e.target.value)}
-                className="px-4 py-3 md:py-4 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-300 text-lg"
+                className="px-5 py-4 md:py-5 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none border-2 border-gray-200 text-lg font-medium shadow-sm bg-white min-w-[160px]"
               >
                 <option value="">All Types</option>
                 <option value="land">Land</option>
@@ -106,10 +116,11 @@ export function HeroSection({ onSearch, districts }: HeroSectionProps) {
                 <option value="mixed">Mixed Use</option>
               </select>
 
+              {/* District Filter */}
               <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="px-4 py-3 md:py-4 text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none border border-gray-300 text-lg"
+                className="px-5 py-4 md:py-5 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none border-2 border-gray-200 text-lg font-medium shadow-sm bg-white min-w-[180px]"
               >
                 <option value="">All Districts</option>
                 {districts.map((d) => (
@@ -117,11 +128,13 @@ export function HeroSection({ onSearch, districts }: HeroSectionProps) {
                 ))}
               </select>
 
+              {/* Search Button - More Prominent */}
               <button
                 type="submit"
-                className="px-8 py-3 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg transition-colors shadow-lg"
+                className="px-8 md:px-10 py-4 md:py-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold text-lg md:text-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-100 min-w-[140px] flex items-center justify-center gap-2"
               >
-                Search
+                <Search size={22} />
+                <span>Search</span>
               </button>
             </div>
           </form>

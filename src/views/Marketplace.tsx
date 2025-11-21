@@ -120,7 +120,19 @@ export function Marketplace() {
   };
 
   const handleHeroSearch = (query: string) => {
-    setFilters((prev) => ({ ...prev, search: query }));
+    // Parse query string if it contains multiple parameters
+    const params = new URLSearchParams(query);
+    const searchText = params.get('q') || query;
+    const propertyType = params.get('type') || '';
+    const district = params.get('district') || '';
+    
+    setFilters((prev) => ({ 
+      ...prev, 
+      search: searchText,
+      propertyType: propertyType,
+      district: district,
+    }));
+    
     // Scroll to properties section
     const propertiesSection = document.getElementById('properties-section');
     if (propertiesSection) {
