@@ -61,13 +61,7 @@ export async function trackVisit(): Promise<void> {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('❌ Error tracking visit:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData,
-        sessionId: sessionId.substring(0, 20) + '...',
-      });
+      // Silently fail in production - errors are logged server-side
       return;
     }
 
@@ -76,17 +70,8 @@ export async function trackVisit(): Promise<void> {
     // Mark this page as tracked
     sessionStorage.setItem(trackingKey, 'true');
     
-    // Log success (always log for debugging)
-    console.log('✅ Visit tracked:', { 
-      source, 
-      medium, 
-      landingPage, 
-      sessionId: sessionId.substring(0, 20) + '...',
-      success: true 
-    });
-    
   } catch (error) {
-    console.error('Error in trackVisit:', error);
+    // Silently fail in production - errors are logged server-side
   }
 }
 

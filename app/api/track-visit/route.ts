@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
         .eq('id', existing.id);
 
       if (updateError) {
-        console.error('Error updating traffic source:', updateError);
+        // Log server-side only (not exposed to client)
         return NextResponse.json(
-          { error: 'Failed to update traffic source', details: updateError.message },
+          { error: 'Failed to update traffic source' },
           { status: 500 }
         );
       }
@@ -83,18 +83,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error inserting traffic source:', error);
+      // Log server-side only (not exposed to client)
       return NextResponse.json(
-        { error: 'Failed to track visit', details: error.message },
+        { error: 'Failed to track visit' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error('Error in track-visit API:', error);
+    // Log server-side only (not exposed to client)
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
