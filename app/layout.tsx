@@ -1,6 +1,8 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { Header } from '../src/components/Header';
+import { Footer } from '../src/components/Footer';
+import { VisitTracker } from '../src/components/VisitTracker';
 
 export const metadata = {
   title: 'Malawi Properties',
@@ -18,9 +20,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
-      <body className="min-h-screen bg-gray-50">
+      <body className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        {children}
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+        <VisitTracker />
       </body>
     </html>
   );

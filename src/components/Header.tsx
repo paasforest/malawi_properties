@@ -1,6 +1,6 @@
  'use client';
 
-import { Building2, User, LogOut, Menu, X } from 'lucide-react';
+import { Building2, User, LogOut, Menu, X, Phone } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -76,6 +76,15 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-4">
+              <a
+                href="tel:+27679518124"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                title="Call us: +27 67 951 8124"
+              >
+                <Phone size={18} />
+                <span className="hidden xl:inline">+27 67 951 8124</span>
+              </a>
+              
               <Link
                 href="/"
                 className={`px-4 py-2 rounded-lg transition-colors text-sm ${
@@ -192,6 +201,25 @@ export function Header() {
           {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
             <nav className="lg:hidden border-t border-gray-200 py-4 space-y-2">
+              <a
+                href="tel:+27679518124"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-base font-medium"
+              >
+                <Phone size={20} />
+                <span>+27 67 951 8124</span>
+              </a>
+              <a
+                href="https://wa.me/27679518124"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-base font-medium"
+              >
+                <Phone size={20} />
+                <span>WhatsApp</span>
+              </a>
+              
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
