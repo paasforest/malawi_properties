@@ -219,9 +219,18 @@ export function PropertyForm({ agent, userId, property, onClose, onSuccess }: Pr
           try {
             // Only delete Hetzner images (skip Supabase URLs)
             if (imageUrl.includes('your-objectstorage.com') || imageUrl.includes('hetzner')) {
+              // Get authentication token
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) {
+                throw new Error('Authentication required to delete images');
+              }
+
               const response = await fetch('/api/delete-image', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({ imageUrl }),
               });
 

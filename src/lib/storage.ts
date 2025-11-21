@@ -62,7 +62,6 @@ export async function uploadFile(fileBuffer: Buffer | Uint8Array, path: string, 
     
     throw new Error('No CDN URL or public S3 endpoint configured');
   } catch (error) {
-    console.error('❌ Upload failed:', error);
     throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -74,27 +73,33 @@ export async function uploadFile(fileBuffer: Buffer | Uint8Array, path: string, 
  * @returns Public URL of uploaded file
  */
 export async function uploadFileFromClient(file: File, path: string): Promise<string> {
+  // Import supabase dynamically to avoid circular dependencies
+  const { supabase } = await import('./supabase');
+  
+  // Get authentication token
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Authentication required to upload files');
+  }
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('path', path);
 
-  console.log('📤 Sending upload request to /api/upload', { path, fileName: file.name, fileSize: file.size });
-
   const response = await fetch('/api/upload', {
     method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+    },
     body: formData,
   });
 
-  console.log('📥 Upload response:', { status: response.status, ok: response.ok });
-
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-    console.error('❌ Upload API error:', error);
     throw new Error(error.error || error.message || `Upload failed with status ${response.status}`);
   }
 
   const data = await response.json();
-  console.log('✅ Upload successful, URL:', data.url);
   return data.url;
 }
 
@@ -112,7 +117,6 @@ export async function deleteFile(path: string): Promise<void> {
   try {
     await s3Client.send(command);
   } catch (error) {
-    console.error('❌ Delete failed:', error);
     throw new Error(`Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -133,7 +137,6 @@ export async function getPresignedUrl(path: string, expiresIn: number = 3600): P
   try {
     return await getSignedUrl(s3Client, command, { expiresIn });
   } catch (error) {
-    console.error('❌ Failed to generate presigned URL:', error);
     throw new Error(`Failed to generate presigned URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
