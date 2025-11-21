@@ -8,12 +8,18 @@ import { supabase } from './supabase';
 /**
  * Track a website visit
  * Called on every page load to track visitors
+ * Uses API route for more reliable tracking
  */
 export async function trackVisit(): Promise<void> {
+  // Only run on client side
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     // Get referrer information
-    const referrer = typeof window !== 'undefined' ? document.referrer : null;
-    const landingPage = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const referrer = document.referrer || null;
+    const landingPage = window.location.pathname || '/';
     
     // Parse source and medium from referrer
     const { source, medium } = parseTrafficSource(referrer);
@@ -27,46 +33,57 @@ export async function trackVisit(): Promise<void> {
     // Create or update session ID
     const sessionId = getOrCreateSessionId();
     
-    // Check if we already tracked this visit (avoid duplicates)
-    const lastTracked = sessionStorage.getItem('lastVisitTracked');
-    const now = Date.now();
-    
-    // Only track if it's been more than 5 minutes since last track (new session)
-    if (lastTracked && (now - parseInt(lastTracked)) < 5 * 60 * 1000) {
-      // Update existing record instead
-      await updateTrafficSource(sessionId, landingPage);
+    // Check if we already tracked this visit in this page load (avoid duplicates)
+    const trackingKey = `tracking_${sessionId}_${landingPage}`;
+    if (sessionStorage.getItem(trackingKey)) {
+      // Already tracked this page in this session
       return;
     }
     
-    // Insert new traffic source record
-    const { error } = await supabase
-      .from('traffic_sources')
-      .insert({
-        session_id: sessionId,
-        user_id: user?.id || null,
-        source: source,
-        medium: medium,
-        referrer: referrer,
-        landing_page: landingPage,
-        device_type: deviceInfo.deviceType,
+    // Use API route for more reliable tracking
+    const response = await fetch('/api/track-visit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sessionId,
+        userId: user?.id || null,
+        source,
+        medium,
+        referrer,
+        landingPage,
+        deviceType: deviceInfo.deviceType,
         browser: deviceInfo.browser,
         os: deviceInfo.os,
-        country: 'Unknown', // Could be enhanced with geolocation API
-        city: 'Unknown',
-        first_visit_at: new Date().toISOString(),
-        last_activity_at: new Date().toISOString(),
-        page_views: 1,
-        converted: false,
+        userAgent: navigator.userAgent,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Error tracking visit:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        sessionId: sessionId.substring(0, 20) + '...',
       });
-    
-    if (error) {
-      console.error('Error tracking visit:', error);
       return;
     }
+
+    const result = await response.json();
     
-    // Store timestamp to avoid duplicate tracking
-    sessionStorage.setItem('lastVisitTracked', now.toString());
-    sessionStorage.setItem('sessionId', sessionId);
+    // Mark this page as tracked
+    sessionStorage.setItem(trackingKey, 'true');
+    
+    // Log success (always log for debugging)
+    console.log('✅ Visit tracked:', { 
+      source, 
+      medium, 
+      landingPage, 
+      sessionId: sessionId.substring(0, 20) + '...',
+      success: true 
+    });
     
   } catch (error) {
     console.error('Error in trackVisit:', error);
@@ -201,35 +218,6 @@ function getOrCreateSessionId(): string {
   return sessionId;
 }
 
-/**
- * Update existing traffic source record (for same session)
- */
-async function updateTrafficSource(sessionId: string, currentPage: string): Promise<void> {
-  try {
-    // First get current page_views
-    const { data: existing } = await supabase
-      .from('traffic_sources')
-      .select('page_views')
-      .eq('session_id', sessionId)
-      .maybeSingle();
-    
-    if (existing) {
-      const { error } = await supabase
-        .from('traffic_sources')
-        .update({
-          last_activity_at: new Date().toISOString(),
-          page_views: (existing.page_views || 0) + 1,
-        })
-        .eq('session_id', sessionId);
-      
-      if (error) {
-        console.error('Error updating traffic source:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Error in updateTrafficSource:', error);
-  }
-}
 
 /**
  * Mark a visit as converted (led to inquiry/signup)
