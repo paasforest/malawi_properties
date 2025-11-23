@@ -32,11 +32,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if this session already exists
-    const { data: existing } = await supabase
+    // Use a service role client or check with proper error handling
+    const { data: existing, error: selectError } = await supabase
       .from('traffic_sources')
       .select('id, page_views')
       .eq('session_id', sessionId)
       .maybeSingle();
+    
+    // If select fails due to RLS, we'll still try to insert (might be first visit)
+    if (selectError && selectError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned (expected), other errors are real issues
+      return NextResponse.json(
+        { error: 'Failed to check existing session', code: selectError.code },
+        { status: 500 }
+      );
+    }
 
     if (existing) {
       // Update existing record
