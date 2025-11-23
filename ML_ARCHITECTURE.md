@@ -39,7 +39,7 @@ Build a machine learning system that:
 **Goal:** Predict property prices based on features
 
 **Minimum Data Required:**
-- 50+ properties with prices
+- 100+ properties with prices
 - At least 3 districts with data
 - Plot sizes and property types
 
@@ -50,7 +50,7 @@ Build a machine learning system that:
 - Bedrooms/bathrooms (for houses)
 - Market conditions
 
-**Activation Threshold:** 50 properties
+**Activation Threshold:** 100 properties (updated per user preference)
 
 **Output:** Price range prediction (e.g., "MK 15M - 20M")
 
@@ -304,13 +304,13 @@ CREATE TABLE ml_training_logs (
 
 ### Expected Milestones
 
-**Month 1-3:**
+**Month 1-6:**
 - Collect initial data
-- **Price Predictor:** Ready when 50 properties reached
+- **Price Predictor:** Ready when 100 properties reached
 - Show progress in dashboard
 
-**Month 4-6:**
-- **Price Predictor:** Active (50+ properties)
+**Month 7-12:**
+- **Price Predictor:** Active (100+ properties)
 - **Demand Forecast:** Ready when 200 properties reached
 
 **Month 7-12:**
