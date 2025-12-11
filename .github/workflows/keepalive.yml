@@ -36,12 +36,12 @@ jobs:
               echo "✅ Keep-alive successful! (Attempt $i)"
               echo "📊 Response: $body"
               
-              # Verify response contains success
-              if echo "$body" | grep -q '"success":true'; then
-                echo "✅ Verified: Response indicates success"
+              # Verify response is valid JSON (either format is OK)
+              if echo "$body" | grep -qE '("success":true|"message":"Visit tracking API is active"|"status":"ok")'; then
+                echo "✅ Verified: Valid API response received"
                 exit 0
               else
-                echo "⚠️  Warning: HTTP 200 but response doesn't indicate success"
+                echo "⚠️  Warning: HTTP 200 but unexpected response format"
                 echo "   Response: $body"
               fi
               exit 0
