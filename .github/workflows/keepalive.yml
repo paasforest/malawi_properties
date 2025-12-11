@@ -17,8 +17,8 @@ jobs:
           KEEPALIVE_URL="${{ secrets.KEEPALIVE_URL }}"
           
           if [ -z "$KEEPALIVE_URL" ]; then
-            # Default production URL
-            KEEPALIVE_URL="https://malawi-properties.vercel.app/api/ping"
+            # Default production URL - using track-visit with GET (has keep-alive built in)
+            KEEPALIVE_URL="https://malawi-properties.vercel.app/api/track-visit"
             echo "⚠️  KEEPALIVE_URL secret not set, using default"
             echo "   Set it in: Settings → Secrets → Actions → New repository secret"
           fi
