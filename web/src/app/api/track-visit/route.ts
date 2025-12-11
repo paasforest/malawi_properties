@@ -135,8 +135,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for testing
-export async function GET() {
-  return NextResponse.json({ message: 'Visit tracking API is active' });
-}
-
