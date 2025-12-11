@@ -3,21 +3,28 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
   try {
+    // Create Supabase client inline (no import issues)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
     );
 
-    // Simple ping to keep connection alive
-    const { error } = await supabase.from('_keep_alive').select('count').limit(1);
+    // Ping Supabase to show activity
+    const { data, error } = await supabase
+      .from('properties')
+      .select('count')
+      .limit(1);
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist (which is fine)
-      console.error('Keep-alive error:', error);
-    }
-
-    return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() });
+    return NextResponse.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      supabase_active: !error 
+    });
   } catch (error) {
     console.error('Keep-alive error:', error);
-    return NextResponse.json({ status: 'error', error: String(error) }, { status: 500 });
+    return NextResponse.json({ 
+      status: 'error', 
+      error: String(error) 
+    }, { status: 500 });
   }
 }
