@@ -4,6 +4,9 @@ const nextConfig = {
   images: {
     domains: ['seijgrobmpqctjripvaiu.supabase.co'],
   },
+  async rewrites() {
+    return [];
+  },
 };
 
 export default nextConfig;
