@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase.js';
 import { Shield, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 
 export default function AdminSetupPage() {

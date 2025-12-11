@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase.js';
 import { AdminDashboard } from '@/views/AdminDashboard';
 
 export default function AdminPage() {
