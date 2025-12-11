@@ -1,0 +1,61 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Run every 6 days at 2 AM UTC (before 7-day inactivity threshold)
+    - cron: '0 2 */6 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Supabase Keep-Alive
+        run: |
+          # Use secret URL if set, otherwise use production URL
+          KEEPALIVE_URL="${{ secrets.KEEPALIVE_URL }}"
+          
+          if [ -z "$KEEPALIVE_URL" ]; then
+            # Default production URL
+            KEEPALIVE_URL="https://malawi-properties.vercel.app/api/keepalive"
+            echo "⚠️  KEEPALIVE_URL secret not set, using default"
+            echo "   Set it in: Settings → Secrets → Actions → New repository secret"
+          fi
+          
+          echo "🔄 Pinging: $KEEPALIVE_URL"
+          echo "⏰ Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          # Ping with timeout and retry
+          for i in 1 2 3; do
+            response=$(curl -s -w "\n%{http_code}" --max-time 30 "$KEEPALIVE_URL" 2>&1 || echo -e "\n000")
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | head -n-1)
+            
+            if [ "$http_code" = "200" ]; then
+              echo "✅ Keep-alive successful! (Attempt $i)"
+              echo "📊 Response: $body"
+              
+              # Verify response contains success
+              if echo "$body" | grep -q '"success":true'; then
+                echo "✅ Verified: Response indicates success"
+                exit 0
+              else
+                echo "⚠️  Warning: HTTP 200 but response doesn't indicate success"
+                echo "   Response: $body"
+              fi
+              exit 0
+            else
+              echo "❌ Attempt $i failed: HTTP $http_code"
+              if [ $i -lt 3 ]; then
+                echo "   Retrying in 5 seconds..."
+                sleep 5
+              fi
+            fi
+          done
+          
+          echo "❌ All attempts failed. Last response:"
+          echo "   HTTP Code: $http_code"
+          echo "   Body: $body"
+          exit 1
+
