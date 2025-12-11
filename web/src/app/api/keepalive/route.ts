@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET() {
-  try {
-    // Create Supabase client inline (no import issues)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    );
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Create Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export async function GET(request: NextRequest) {
+  try {
     // Ping Supabase to show activity
     const { data, error } = await supabase
       .from('properties')
@@ -30,5 +30,3 @@ export async function GET() {
     }, { status: 500 });
   }
 }
-
-// Force rebuild Thu Dec 11 07:47:41 PM SAST 2025
