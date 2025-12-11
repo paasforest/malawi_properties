@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Analytics } from '@/views/Analytics';
+import { supabase } from '../../lib/supabase';
+import { Analytics } from '../../views/Analytics';
 
 export default function AnalyticsPage() {
   const router = useRouter();

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { Lock, CheckCircle, AlertCircle, Shield } from 'lucide-react';
 
 export default function AdminResetPasswordPage() {

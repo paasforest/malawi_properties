@@ -1,4 +1,4 @@
-import { BuyerDashboard } from '@/views/BuyerDashboard';
+import { BuyerDashboard } from '../../views/BuyerDashboard';
 
 export default function BuyerDashboardPage() {
   return <BuyerDashboard />;

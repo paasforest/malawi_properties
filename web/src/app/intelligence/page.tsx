@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { MarketIntelligence } from '@/views/MarketIntelligence';
+import { supabase } from '../../lib/supabase';
+import { MarketIntelligence } from '../../views/MarketIntelligence';
 
 export default function IntelligencePage() {
   const router = useRouter();

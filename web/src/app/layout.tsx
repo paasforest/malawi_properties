@@ -1,8 +1,8 @@
 import './globals.css';
 import type { ReactNode } from 'react';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { VisitTracker } from '@/components/VisitTracker';
+import { Header } from '../components/Header';
+import { Footer } from '../components/Footer';
+import { VisitTracker } from '../components/VisitTracker';
 
 export const metadata = {
   title: 'Malawi Properties',
