@@ -1,32 +1,30 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
   try {
-    // Simple query that counts profiles - lightweight but shows activity
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
-
-    if (error) {
-      console.error('Keep-alive error:', error);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-      profiles_count: count || 0,
-      message: 'Supabase keep-alive ping successful',
-    });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 500 }
+    // Create Supabase client inline (no import issues)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
     );
+
+    // Ping Supabase to show activity
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .limit(1);
+    
+    return NextResponse.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      supabase_active: !error 
+    });
+  } catch (error) {
+    console.error('Keep-alive error:', error);
+    return NextResponse.json({ 
+      status: 'error', 
+      error: String(error) 
+    }, { status: 500 });
   }
 }
-
