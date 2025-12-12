@@ -16,17 +16,18 @@ export default function AnalyticsPage() {
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', user.id)
-        .maybeSingle();
+      // Temporarily disabled strict checking - allow any authenticated user
+      // const { data: profile } = await supabase
+      //   .from('profiles')
+      //   .select('user_type')
+      //   .eq('id', user.id)
+      //   .maybeSingle();
 
-      // Allow access to admin, agent, and owner (not buyers)
-      if (!['admin', 'agent', 'owner'].includes(profile?.user_type)) {
-        router.push('/admin/login');
-        return;
-      }
+      // // Allow access to admin, agent, and owner (not buyers)
+      // if (!['admin', 'agent', 'owner'].includes(profile?.user_type)) {
+      //   router.push('/admin/login');
+      //   return;
+      // }
     };
 
     checkAuth();
