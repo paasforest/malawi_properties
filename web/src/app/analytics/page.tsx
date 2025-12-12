@@ -16,18 +16,17 @@ export default function AnalyticsPage() {
         return;
       }
 
-      // Temporarily disabled strict checking - allow any authenticated user
-      // const { data: profile } = await supabase
-      //   .from('profiles')
-      //   .select('user_type')
-      //   .eq('id', user.id)
-      //   .maybeSingle();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      // // Allow access to admin, agent, and owner (not buyers)
-      // if (!['admin', 'agent', 'owner'].includes(profile?.user_type)) {
-      //   router.push('/admin/login');
-      //   return;
-      // }
+      // Admin only access
+      if (profile?.user_type !== 'admin') {
+        router.push('/admin/login');
+        return;
+      }
     };
 
     checkAuth();
